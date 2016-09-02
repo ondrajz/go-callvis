@@ -27,7 +27,7 @@ var (
 		"focus package name")
 
 	subFlag = flag.String("sub", "",
-		"subgraph by [type]")
+		"subgraph by [type, pkg]")
 
 	ptalogFlag = flag.String("ptalog", "",
 		"Location of the points-to analysis log file, or empty to disable logging.")
@@ -77,6 +77,7 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, test
 	result.CallGraph.DeleteSyntheticNodes()
 
 	subType := subgraph == "type"
+	subPkg := subgraph == "pkg"
 
 	var edges []string
 	edgeMap := make(map[string]struct{})
@@ -108,12 +109,17 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, test
 					callerParts := strings.Split(callerLabel, ".")
 					callerLabel = callerParts[len(callerParts)-1]
 				}
+			} else if subPkg {
+				callerLabel = fmt.Sprintf("%s", caller.RelString(caller.Pkg.Pkg))
 			}
 			callerProps = append(callerProps, fmt.Sprintf("label=%q", callerLabel))
 			callerNode := fmt.Sprintf("%q [%s]", caller, strings.Join(callerProps, " "))
 			if subType && caller.Pkg.Pkg.Name() == focusPkg && callerSign.Recv() != nil {
 				callerNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
 					callerSign.Recv().Type(), strings.Split(fmt.Sprint(callerSign.Recv().Type()), ".")[1], callerNode)
+			} else if subPkg && caller.Pkg.Pkg.Name() != focusPkg {
+				callerNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
+					caller.Pkg.Pkg.Name(), caller.Pkg.Pkg.Name(), callerNode)
 			}
 
 			calleeProps := []string{}
@@ -129,12 +135,17 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, test
 					calleeParts := strings.Split(calleeLabel, ".")
 					calleeLabel = calleeParts[len(calleeParts)-1]
 				}
+			} else if subPkg {
+				calleeLabel = fmt.Sprintf("%s", callee.RelString(callee.Pkg.Pkg))
 			}
 			calleeProps = append(calleeProps, fmt.Sprintf("label=%q", calleeLabel))
 			calleeNode := fmt.Sprintf("%q [%s]", callee, strings.Join(calleeProps, " "))
 			if subType && callee.Pkg.Pkg.Name() == focusPkg && calleeSign.Recv() != nil {
 				calleeNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
 					calleeSign.Recv().Type(), strings.Split(fmt.Sprint(calleeSign.Recv().Type()), ".")[1], calleeNode)
+			} else if subPkg && callee.Pkg.Pkg.Name() != focusPkg {
+				calleeNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
+					callee.Pkg.Pkg.Name(), callee.Pkg.Pkg.Name(), calleeNode)
 			}
 
 			s := fmt.Sprintf("%s;%s; %q -> %q [%s]",
