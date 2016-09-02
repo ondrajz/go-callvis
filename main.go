@@ -91,37 +91,45 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath string, tests bool, ar
 			}
 
 			callerProps := []string{}
+			callerSign := caller.Signature
+			if caller.Parent() != nil {
+				callerSign = caller.Parent().Signature
+			}
 			callerLabel := fmt.Sprintf("%s\n%s", caller.Pkg.Pkg.Name(), caller.RelString(caller.Pkg.Pkg))
 			if caller.Pkg.Pkg.Name() == focusPkg {
 				callerProps = append(callerProps, "fillcolor=lightblue")
 				callerLabel = fmt.Sprintf("%s", caller.RelString(caller.Pkg.Pkg))
-			}
-			if caller.Pkg.Pkg.Name() == focusPkg && caller.Signature.Recv() != nil {
-				callerParts := strings.Split(callerLabel, ".")
-				callerLabel = callerParts[len(callerParts)-1]
+				if callerSign.Recv() != nil {
+					callerParts := strings.Split(callerLabel, ".")
+					callerLabel = callerParts[len(callerParts)-1]
+				}
 			}
 			callerProps = append(callerProps, fmt.Sprintf("label=%q", callerLabel))
 			callerNode := fmt.Sprintf("%q [%s]", caller, strings.Join(callerProps, " "))
-			if caller.Pkg.Pkg.Name() == focusPkg && caller.Signature.Recv() != nil {
+			if caller.Pkg.Pkg.Name() == focusPkg && callerSign.Recv() != nil {
 				callerNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
-					caller.Signature.Recv().Type(), strings.Split(fmt.Sprint(caller.Signature.Recv().Type()), ".")[1], callerNode)
+					callerSign.Recv().Type(), strings.Split(fmt.Sprint(callerSign.Recv().Type()), ".")[1], callerNode)
 			}
 
 			calleeProps := []string{}
+			calleeSign := callee.Signature
+			if callee.Parent() != nil {
+				calleeSign = callee.Parent().Signature
+			}
 			calleeLabel := fmt.Sprintf("%s\n%s", callee.Pkg.Pkg.Name(), callee.RelString(callee.Pkg.Pkg))
 			if callee.Pkg.Pkg.Name() == focusPkg {
 				calleeProps = append(calleeProps, "fillcolor=lightblue")
 				calleeLabel = fmt.Sprintf("%s", callee.RelString(callee.Pkg.Pkg))
-			}
-			if callee.Pkg.Pkg.Name() == focusPkg && callee.Signature.Recv() != nil {
-				calleeParts := strings.Split(calleeLabel, ".")
-				calleeLabel = calleeParts[len(calleeParts)-1]
+				if calleeSign.Recv() != nil {
+					calleeParts := strings.Split(calleeLabel, ".")
+					calleeLabel = calleeParts[len(calleeParts)-1]
+				}
 			}
 			calleeProps = append(calleeProps, fmt.Sprintf("label=%q", calleeLabel))
 			calleeNode := fmt.Sprintf("%q [%s]", callee, strings.Join(calleeProps, " "))
-			if callee.Pkg.Pkg.Name() == focusPkg && callee.Signature.Recv() != nil {
+			if callee.Pkg.Pkg.Name() == focusPkg && calleeSign.Recv() != nil {
 				calleeNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
-					callee.Signature.Recv().Type(), strings.Split(fmt.Sprint(callee.Signature.Recv().Type()), ".")[1], calleeNode)
+					calleeSign.Recv().Type(), strings.Split(fmt.Sprint(calleeSign.Recv().Type()), ".")[1], calleeNode)
 			}
 
 			s := fmt.Sprintf("%s;%s; %q -> %q [%s]",
@@ -144,7 +152,7 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath string, tests bool, ar
         rankdir=LR;
         fontsize=22;
         fontname="Ubuntu";
-        edge [minlen=1];
+        edge [minlen=2];
         node [shape=box style="rounded,filled" fillcolor=wheat fontname="Ubuntu"];
 `, focusPkg)
 	for _, edge := range edges {
