@@ -26,19 +26,22 @@ var (
 	focusFlag = flag.String("focus", "",
 		"focus package name")
 
+	subFlag = flag.String("sub", "",
+		"subgraph by [type]")
+
 	ptalogFlag = flag.String("ptalog", "",
 		"Location of the points-to analysis log file, or empty to disable logging.")
 )
 
 func main() {
 	flag.Parse()
-	if err := doCallgraph(&build.Default, *focusFlag, *limitFlag, *testFlag, flag.Args()); err != nil {
+	if err := doCallgraph(&build.Default, *focusFlag, *limitFlag, *subFlag, *testFlag, flag.Args()); err != nil {
 		fmt.Fprintf(os.Stderr, "go-callmap: %s\n", err)
 		os.Exit(1)
 	}
 }
 
-func doCallgraph(ctxt *build.Context, focusPkg, limitPath string, tests bool, args []string) error {
+func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, tests bool, args []string) error {
 	conf := loader.Config{Build: &build.Default}
 
 	if len(args) == 0 {
@@ -73,6 +76,8 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath string, tests bool, ar
 	}
 	result.CallGraph.DeleteSyntheticNodes()
 
+	subType := subgraph == "type"
+
 	var edges []string
 	edgeMap := make(map[string]struct{})
 	callgraph.GraphVisitEdges(result.CallGraph, func(edge *callgraph.Edge) error {
@@ -99,14 +104,14 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath string, tests bool, ar
 			if caller.Pkg.Pkg.Name() == focusPkg {
 				callerProps = append(callerProps, "fillcolor=lightblue")
 				callerLabel = fmt.Sprintf("%s", caller.RelString(caller.Pkg.Pkg))
-				if callerSign.Recv() != nil {
+				if subType && callerSign.Recv() != nil {
 					callerParts := strings.Split(callerLabel, ".")
 					callerLabel = callerParts[len(callerParts)-1]
 				}
 			}
 			callerProps = append(callerProps, fmt.Sprintf("label=%q", callerLabel))
 			callerNode := fmt.Sprintf("%q [%s]", caller, strings.Join(callerProps, " "))
-			if caller.Pkg.Pkg.Name() == focusPkg && callerSign.Recv() != nil {
+			if subType && caller.Pkg.Pkg.Name() == focusPkg && callerSign.Recv() != nil {
 				callerNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
 					callerSign.Recv().Type(), strings.Split(fmt.Sprint(callerSign.Recv().Type()), ".")[1], callerNode)
 			}
@@ -120,14 +125,14 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath string, tests bool, ar
 			if callee.Pkg.Pkg.Name() == focusPkg {
 				calleeProps = append(calleeProps, "fillcolor=lightblue")
 				calleeLabel = fmt.Sprintf("%s", callee.RelString(callee.Pkg.Pkg))
-				if calleeSign.Recv() != nil {
+				if subType && calleeSign.Recv() != nil {
 					calleeParts := strings.Split(calleeLabel, ".")
 					calleeLabel = calleeParts[len(calleeParts)-1]
 				}
 			}
 			calleeProps = append(calleeProps, fmt.Sprintf("label=%q", calleeLabel))
 			calleeNode := fmt.Sprintf("%q [%s]", callee, strings.Join(calleeProps, " "))
-			if callee.Pkg.Pkg.Name() == focusPkg && calleeSign.Recv() != nil {
+			if subType && callee.Pkg.Pkg.Name() == focusPkg && calleeSign.Recv() != nil {
 				calleeNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
 					calleeSign.Recv().Type(), strings.Split(fmt.Sprint(calleeSign.Recv().Type()), ".")[1], calleeNode)
 			}
