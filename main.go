@@ -36,7 +36,7 @@ var (
 func main() {
 	flag.Parse()
 	if err := doCallgraph(&build.Default, *focusFlag, *limitFlag, *subFlag, *minlenFlag, *testFlag, flag.Args()); err != nil {
-		fmt.Fprintf(os.Stderr, "go-callmap: %s\n", err)
+		fmt.Fprintf(os.Stderr, "go-callvis: %s\n", err)
 		os.Exit(1)
 	}
 }
