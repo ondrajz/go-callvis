@@ -29,19 +29,22 @@ var (
 	subFlag = flag.String("sub", "",
 		"subgraph by [type, pkg]")
 
+	minlenFlag = flag.Uint("minlen", 2,
+		"minlen of edge")
+
 	ptalogFlag = flag.String("ptalog", "",
 		"Location of the points-to analysis log file, or empty to disable logging.")
 )
 
 func main() {
 	flag.Parse()
-	if err := doCallgraph(&build.Default, *focusFlag, *limitFlag, *subFlag, *testFlag, flag.Args()); err != nil {
+	if err := doCallgraph(&build.Default, *focusFlag, *limitFlag, *subFlag, *minlenFlag, *testFlag, flag.Args()); err != nil {
 		fmt.Fprintf(os.Stderr, "go-callmap: %s\n", err)
 		os.Exit(1)
 	}
 }
 
-func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, tests bool, args []string) error {
+func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, minlen uint, tests bool, args []string) error {
 	conf := loader.Config{Build: &build.Default}
 
 	if len(args) == 0 {
@@ -174,9 +177,9 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, test
         rankdir=LR;
         fontsize=22;
         fontname="Ubuntu";
-        edge [minlen=2];
+        edge [minlen=%d];
         node [shape=box style="rounded,filled" fillcolor=wheat fontname="Ubuntu"];
-`, focusPkg)
+`, focusPkg, minlen)
 	for _, edge := range edges {
 		fmt.Println("\t", edge)
 	}
