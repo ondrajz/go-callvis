@@ -17,9 +17,6 @@ import (
 )
 
 var (
-	testFlag = flag.Bool("test", false,
-		"Loads test code (*_test.go) for imported packages")
-
 	limitFlag = flag.String("limit", "",
 		"limit package path")
 
@@ -32,8 +29,8 @@ var (
 	minlenFlag = flag.Uint("minlen", 2,
 		"minlen of edge")
 
-	ptalogFlag = flag.String("ptalog", "",
-		"Location of the points-to analysis log file, or empty to disable logging.")
+	testFlag = flag.Bool("test", false,
+		"Loads test code (*_test.go) for imported packages")
 )
 
 func main() {
@@ -197,16 +194,9 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, minl
 	return nil
 }
 
-// mainPackage returns the main package to analyze.
-// The resulting package has a main() function.
 func mainPackage(prog *ssa.Program, tests bool) (*ssa.Package, error) {
 	pkgs := prog.AllPackages()
-
-	// TODO(adonovan): allow independent control over tests, mains and libraries.
-	// TODO(adonovan): put this logic in a library; we keep reinventing it.
-
 	if tests {
-		// If -test, use all packages' tests.
 		if len(pkgs) > 0 {
 			if main := prog.CreateTestMainPackage(pkgs...); main != nil {
 				return main, nil
@@ -214,8 +204,6 @@ func mainPackage(prog *ssa.Program, tests bool) (*ssa.Package, error) {
 		}
 		return nil, fmt.Errorf("no tests")
 	}
-
-	// Otherwise, use the first package named main.
 	for _, pkg := range pkgs {
 		if pkg.Pkg.Name() == "main" {
 			if pkg.Func("main") == nil {
@@ -224,6 +212,5 @@ func mainPackage(prog *ssa.Program, tests bool) (*ssa.Package, error) {
 			return pkg, nil
 		}
 	}
-
 	return nil, fmt.Errorf("no main package")
 }
