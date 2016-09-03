@@ -113,6 +113,9 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, test
 				callerLabel = fmt.Sprintf("%s", caller.RelString(caller.Pkg.Pkg))
 			}
 			callerProps = append(callerProps, fmt.Sprintf("label=%q", callerLabel))
+			if caller.Parent() != nil {
+				callerProps = append(callerProps, "style=\"dotted,rounded,filled\"")
+			}
 			callerNode := fmt.Sprintf("%q [%s]", caller, strings.Join(callerProps, " "))
 			if subType && caller.Pkg.Pkg.Name() == focusPkg && callerSign.Recv() != nil {
 				callerNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
@@ -139,6 +142,9 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, test
 				calleeLabel = fmt.Sprintf("%s", callee.RelString(callee.Pkg.Pkg))
 			}
 			calleeProps = append(calleeProps, fmt.Sprintf("label=%q", calleeLabel))
+			if callee.Parent() != nil {
+				calleeProps = append(calleeProps, "style=\"dotted,rounded,filled\"")
+			}
 			calleeNode := fmt.Sprintf("%q [%s]", callee, strings.Join(calleeProps, " "))
 			if subType && callee.Pkg.Pkg.Name() == focusPkg && calleeSign.Recv() != nil {
 				calleeNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
