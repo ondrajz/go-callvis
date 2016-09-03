@@ -94,11 +94,6 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, minl
 			strings.HasPrefix(caller.Pkg.Pkg.Path(), limitPath) &&
 			strings.HasPrefix(callee.Pkg.Pkg.Path(), limitPath) {
 
-			props := []string{}
-			if edge.Site != nil && edge.Site.Common().StaticCallee() == nil {
-				props = append(props, "arrowhead=empty", "style=dashed")
-			}
-
 			callerProps := []string{}
 			callerSign := caller.Signature
 			if caller.Parent() != nil {
@@ -157,9 +152,22 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, subgraph string, minl
 					callee.Pkg.Pkg.Name(), callee.Pkg.Pkg.Name(), calleeNode)
 			}
 
+			edgeProps := []string{}
+			if edge.Site != nil && edge.Site.Common().StaticCallee() == nil {
+				edgeProps = append(edgeProps, "style=dashed")
+			}
+			switch edge.Site.(type) {
+			case *ssa.Go:
+				edgeProps = append(edgeProps, "arrowhead=empty")
+			case *ssa.Defer:
+				edgeProps = append(edgeProps, "arrowhead=odot")
+			}
+			if callee.Pkg.Pkg.Name() != focusPkg || caller.Pkg.Pkg.Name() != focusPkg {
+				edgeProps = append(edgeProps, "color=saddlebrown")
+			}
 			s := fmt.Sprintf("%s;%s; %q -> %q [%s]",
 				callerNode, calleeNode,
-				caller, callee, strings.Join(props, " "))
+				caller, callee, strings.Join(edgeProps, " "))
 			if _, ok := edgeMap[s]; !ok {
 				edges = append(edges, s)
 				edgeMap[s] = struct{}{}
