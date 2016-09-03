@@ -12,24 +12,31 @@ go get -u -v github.com/TrueFurby/go-callmap
 ```
 
 ## Legend
-+ *nodes*
- - **blue background**: focused package
- - **yellow background**: other packages
- - **dotted border**: anonymous func
-+ *edges*
- - **brown line**: outside focused package
- - **dashed line**: dynamic call
- - **empty arrow**: concurrent call
- - **empty circle**: deferred call
 
-## Usage
+### nodes
+Style | Description
+--- | ---
+*blue background* | focused package
+*yellow background* | other packages
+*dotted border* | anonymous func
+
+### edges
+Style | Description
+--- | ---
+*brown line* | outside focused package
+*dashed line* | dynamic call
+*empty arrow* | concurrent call
+*empty circle* | deferred call
+
+## Example
+Here's example usage for [syncthing](https://github.com/syncthing/syncthing) program focusing *upgrade* package:
 ```
 go-callmap -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
 ```
 
 ![alt text](https://raw.githubusercontent.com/TrueFurby/go-callmap/master/images/syncthing.png)
 
-and same with grouping by package
+and same using grouping by package:
 
 ```
 go-callmap -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
