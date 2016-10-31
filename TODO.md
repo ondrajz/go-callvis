@@ -1,11 +1,14 @@
 # TODO
 
 ## Styling
-- use rounded corners just for methods
+- add different styling for
+    - methods / funcs
+    - exported / unexported
+- connect anon funcs with its parent
 - colorize non-focused packages individually
-- join anon funcs with its parent
 
-## Flags
-- add ignore flag to omit pkg/type/func
+## Options
+- flag to ignore some pkg/type/func
+- flag to omit unexported funcs
 - combine different types for grouping
 - multiple package paths for limit
