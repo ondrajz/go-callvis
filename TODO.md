@@ -3,7 +3,6 @@
 ## Styling
 - add different styling for
     - methods / funcs
-    - exported / unexported
 - connect anon funcs with its parent
 - colorize non-focused packages individually
 

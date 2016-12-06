@@ -13,7 +13,8 @@ Ideally final objective of this project is to make web application that will sto
 ## Features
 
 - focus specific package
-- limit package path with prefix
+- limit package path to prefix
+- ignore package paths with prefix
 - group functions by type/pkg
 
 ## Install
@@ -29,6 +30,7 @@ go get -u -v github.com/TrueFurby/go-callvis
 | ----- | -----------
 | *blue background* | focused package
 | *yellow background* | other packages
+| *bold border* | exported func
 | *dotted border* | anonymous func
 
 ### edges

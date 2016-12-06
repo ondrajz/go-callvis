@@ -134,6 +134,8 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, ignorePath, subgraph 
 		callerProps = append(callerProps, fmt.Sprintf("label=%q", callerLabel))
 		if caller.Parent() != nil {
 			callerProps = append(callerProps, "style=\"dotted,rounded,filled\"")
+		} else if caller.Object() != nil && caller.Object().Exported() {
+			callerProps = append(callerProps, "style=\"bold,rounded,filled\"")
 		}
 		callerNode := fmt.Sprintf("%q [%s]", caller, strings.Join(callerProps, " "))
 		if subType && caller.Pkg.Pkg.Name() == focusPkg && callerSign.Recv() != nil {
@@ -163,6 +165,8 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, ignorePath, subgraph 
 		calleeProps = append(calleeProps, fmt.Sprintf("label=%q", calleeLabel))
 		if callee.Parent() != nil {
 			calleeProps = append(calleeProps, "style=\"dotted,rounded,filled\"")
+		} else if callee.Object() != nil && callee.Object().Exported() {
+			calleeProps = append(calleeProps, "style=\"bold,rounded,filled\"")
 		}
 		calleeNode := fmt.Sprintf("%q [%s]", callee, strings.Join(calleeProps, " "))
 		if subType && callee.Pkg.Pkg.Name() == focusPkg && calleeSign.Recv() != nil {
