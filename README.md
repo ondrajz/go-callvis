@@ -13,7 +13,8 @@ Intended purpose of this tool is to show overview of your code's structure by vi
 
 ### Requirements
 
-[GraphViz](http://www.graphviz.org/Download..php)
+* [Go](https://golang.org/dl/)
+* [GraphViz](http://www.graphviz.org/Download..php)
 
 ### Installation
 
