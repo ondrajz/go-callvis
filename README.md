@@ -11,6 +11,10 @@ Intended purpose of this tool is to show overview of your code's structure by vi
 - **ignore** multiple packages containing **prefix**
 - **group** functions by **types/packages**
 
+### Requirements
+
+[GraphViz](http://www.graphviz.org/Download..php)
+
 ### Installation
 
 `go get -u -v github.com/TrueFurby/go-callvis`
