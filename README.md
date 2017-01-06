@@ -4,20 +4,24 @@ go-callvis is a development tool to help visualize call graph of your Go program
 
 ![example](images/main.png)
 
-Intended purpose of this tool is to show overview of your code's structure by visually representing call graph and type relations. This is especially useful in larger projects where the complexity of the code rises.
+Intended purpose of this tool is to provide a visual overview of your program's source code by using call graph and type relations. This is especially useful in larger projects where the complexity of the structure rises.
 
-#### How it works
-
-It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with graphviz tools.
-
-### Features
+#### Features
 
 - **focus** specific **package** in program
 - **limit** to include only packages containing **prefix**
 - **ignore** multiple packages containing **prefix**
 - **group** functions by **types/packages**
 
-### Requirements
+##### How it works
+
+It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with graphviz tools.
+
+##### Project goal
+
+Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
+
+#### Requirements
 
 * [Go](https://golang.org/dl/)
 * [Graphviz](http://www.graphviz.org/Download..php)
@@ -26,7 +30,23 @@ It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to c
 
 `go get -u -v github.com/TrueFurby/go-callvis`
 
-## Legend
+## Usage
+
+```
+go-callvis [OPTIONS] <main pkg>
+
+Options:
+  -focus string
+    	focus package name (default: main)
+  -ignore string
+    	ignore package path
+  -limit string
+    	limit package path
+  -sub string
+    	subgraph by [type, pkg]
+```
+
+### Legend
 
 Element             | Style    | Represents
 ------------------: | :------: | -----------
@@ -39,7 +59,7 @@ __node background__ |  _blue_  | focused package
      __edge arrow__ | _empty_  | concurrent call
     __edge circle__ | _empty_  | deferred call
 
-## Examples
+### Examples
 
 Here are usage examples for [syncthing](https://github.com/syncthing/syncthing) program.
 
@@ -63,31 +83,14 @@ go-callvis -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.
 ```
 go-callvis -ignore github.com/syncthing/syncthing/lib/logger -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
 ```
+---
 
-## Flags
-
-```
-Usage of go-callvis:
-  -focus string
-    	focus package name
-  -ignore string
-    	ignore package path
-  -limit string
-    	limit package path
-  -sub string
-    	subgraph by [type, pkg]
-```
-
-## Known Issues
+### Known Issues
 
 + **execution takes a lot of time (~5s), because currently:**
   - the call graph is always generated for the entire program
   - there is yet no caching of call graph data
 
-## Roadmap
-
-Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
-
 ## Community
 
-Join the [go-callvis channel](https://gophers.slack.com/archives/go-callvis) at [gophers.slack.com](http://gophers.slack.com)
+Join the [#go-callvis](https://gophers.slack.com/archives/go-callvis) channel at [gophers.slack.com](http://gophers.slack.com)
