@@ -1,20 +1,18 @@
 TODO
 ====
-- option to group by file
-- option to ignore some pkg/type/func (using regexp)
-- option to omit unexported funcs
+- option to group by source file
+- option to ignore some package/type/function (using regexp)
+- option to omit unexported funcs or methods
+- option to ignore standard/vendored packages
 - option to show package paths (not just names)
-- add different style for methods and funcs
-  > *for example: darker/lighter background color*
-
-- connect anon funcs with its parent
-  > *for example: combine them together in one box representing parent func*
-
-- colorize non-focused packages individually
-  > *for example: use different hue for different package*
-
-- combine different types for grouping
-  > *for example: group by pkg and type*
-
+- use different style for methods and funcs
+  + *for example:* darker/lighter background color
+- connect anon funcs with their parents
+  + *for example:* combine them together in one box representing parent func
+- vary colors of each individual non-focused package
+  + *for example:* use different hue for different package
+- allow combination of grouping options
+  + *for example:* group by pkg and type
 - support multiple package paths for limit flag
-- cache call map data in file
+- store call graph data and update only when source changes
+  + *for example:* keep the data in /tmp folder or in working directory
