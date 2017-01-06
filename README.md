@@ -1,5 +1,7 @@
 # go-callvis
 
+![example](images/main.png)
+
 go-callvis is a development tool to help visualize call graph of your Go program.
 
 Intended purpose of this tool is to show overview of your code's structure by visually representing call graph and type relations. This is especially useful in larger projects where the complexity of the code rises.
