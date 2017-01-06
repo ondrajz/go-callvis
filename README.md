@@ -1,10 +1,14 @@
 # go-callvis
 
-![example](images/main.png)
-
 go-callvis is a development tool to help visualize call graph of your Go program.
 
+![example](images/main.png)
+
 Intended purpose of this tool is to show overview of your code's structure by visually representing call graph and type relations. This is especially useful in larger projects where the complexity of the code rises.
+
+#### How it works
+
+It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with graphviz tools.
 
 ### Features
 
@@ -16,7 +20,7 @@ Intended purpose of this tool is to show overview of your code's structure by vi
 ### Requirements
 
 * [Go](https://golang.org/dl/)
-* [GraphViz](http://www.graphviz.org/Download..php)
+* [Graphviz](http://www.graphviz.org/Download..php)
 
 ### Installation
 
@@ -74,10 +78,10 @@ Usage of go-callvis:
     	subgraph by [type, pkg]
 ```
 
-## How it works
-
-It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with graphviz tools.
-
 ## Roadmap
 
 Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
+
+## Community
+
+Join the [go-callvis channel](https://gophers.slack.com/archives/go-callvis) at [gophers.slack.com](http://gophers.slack.com)
