@@ -78,6 +78,12 @@ Usage of go-callvis:
     	subgraph by [type, pkg]
 ```
 
+## Known Issues
+
++ **execution takes a lot of time (~5s), because currently:**
+  - the call graph is always generated for the entire program
+  - there is yet no caching of call graph data
+
 ## Roadmap
 
 Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
