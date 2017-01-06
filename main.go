@@ -139,8 +139,10 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, ignorePath, subgraph 
 		}
 		callerNode := fmt.Sprintf("%q [%s]", caller, strings.Join(callerProps, " "))
 		if subType && caller.Pkg.Pkg.Name() == focusPkg && callerSign.Recv() != nil {
+			parts := strings.Split(fmt.Sprint(callerSign.Recv().Type()), ".")
+			clusterLabel := parts[len(parts)-1]
 			callerNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
-				callerSign.Recv().Type(), strings.Split(fmt.Sprint(callerSign.Recv().Type()), ".")[1], callerNode)
+				callerSign.Recv().Type(), clusterLabel, callerNode)
 		} else if subPkg && caller.Pkg.Pkg.Name() != focusPkg {
 			callerNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
 				caller.Pkg.Pkg.Name(), caller.Pkg.Pkg.Name(), callerNode)
@@ -170,8 +172,10 @@ func doCallgraph(ctxt *build.Context, focusPkg, limitPath, ignorePath, subgraph 
 		}
 		calleeNode := fmt.Sprintf("%q [%s]", callee, strings.Join(calleeProps, " "))
 		if subType && callee.Pkg.Pkg.Name() == focusPkg && calleeSign.Recv() != nil {
+			parts := strings.Split(fmt.Sprint(calleeSign.Recv().Type()), ".")
+			clusterLabel := parts[len(parts)-1]
 			calleeNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
-				calleeSign.Recv().Type(), strings.Split(fmt.Sprint(calleeSign.Recv().Type()), ".")[1], calleeNode)
+				calleeSign.Recv().Type(), clusterLabel, calleeNode)
 		} else if subPkg && callee.Pkg.Pkg.Name() != focusPkg {
 			calleeNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
 				callee.Pkg.Pkg.Name(), callee.Pkg.Pkg.Name(), calleeNode)
