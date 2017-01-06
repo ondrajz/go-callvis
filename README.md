@@ -61,27 +61,29 @@ __node background__ |  _blue_  | focused package
      __edge arrow__ | _empty_  | concurrent call
     __edge circle__ | _empty_  | deferred call
 
-### Examples
+## Examples
 
 Here are usage examples for [syncthing](https://github.com/syncthing/syncthing) program.
 
-+ **focusing package** _upgrade_
+#### Focusing package _upgrade_
 
-  ![syncthing example output](images/syncthing.png)
+![syncthing example output](images/syncthing.png)
 ```
 go-callvis -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
 ```
+---
 
-+ with **grouping by packages**
+#### Grouping by packages
 
-  ![syncthing example output pkg](images/syncthing_pkg.png)
+![syncthing example output pkg](images/syncthing_pkg.png)
 ```
 go-callvis -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
 ```
+---
 
-+ and **ignoring package** _logger_
+#### Ignoring package _logger_
 
-  ![syncthing example output ignore](images/syncthing_ignore.png)
+![syncthing example output ignore](images/syncthing_ignore.png)
 ```
 go-callvis -ignore github.com/syncthing/syncthing/lib/logger -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
 ```
