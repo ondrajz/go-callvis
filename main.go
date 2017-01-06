@@ -23,7 +23,7 @@ var (
 	limitFlag = flag.String("limit", "",
 		"limit package path")
 
-	focusFlag = flag.String("focus", "",
+	focusFlag = flag.String("focus", "main",
 		"focus package name")
 
 	subFlag = flag.String("sub", "",
