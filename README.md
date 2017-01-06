@@ -6,27 +6,29 @@ go-callvis is a development tool to help visualize call graph of your Go program
 
 Intended purpose of this tool is to provide a visual overview of your program's source code by using call graph and type relations. This is especially useful in larger projects where the complexity of the structure rises.
 
-#### Features
+### Features
 
 - **focus** specific **package** in program
 - **limit** to include only packages containing **prefix**
 - **ignore** multiple packages containing **prefix**
 - **group** functions by **types/packages**
 
-##### How it works
+#### How it works
 
 It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with graphviz tools.
 
-##### Project goal
+#### Project goal
 
 Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
+
+## Installation
 
 #### Requirements
 
 * [Go](https://golang.org/dl/)
 * [Graphviz](http://www.graphviz.org/Download..php)
 
-### Installation
+#### Install with
 
 `go get -u -v github.com/TrueFurby/go-callvis`
 
@@ -85,7 +87,7 @@ go-callvis -ignore github.com/syncthing/syncthing/lib/logger -sub pkg -focus upg
 ```
 ---
 
-### Known Issues
+## Known Issues
 
 + **execution takes a lot of time (~5s), because currently:**
   - the call graph is always generated for the entire program
