@@ -52,16 +52,17 @@ Options:
 
 ### Legend
 
-Element         | Style           |       Represents        |                   Example
---------------: | :-------------- | :---------------------: | :-----------------------------------------:
-       **node** | _blue color_    |     focused package     |    ![focused](images/legend_focused.png)
-                | _yellow color_  |  non-focused packages   | ![nonfocused](images/legend_nonfocused.png)
-       **node** | _bold border_   |      exported func      |   ![exported](images/legend_exported.png)
-                | _dotted border_ |     anonymous func      |  ![anonymous](images/legend_anonymous.png)
-       **edge** | _brown color_   | outside focused package |    ![outside](images/legend_outside.png)
-                | _dashed line_   |      dynamic call       |    ![dynamic](images/legend_dynamic.png)
-**arrow shape** | _empty arrow_   |     concurrent call     | ![concurrent](images/legend_concurrent.png)
-**arrow shape** | _empty circle_  |      deferred call      |   ![deferred](images/legend_deferred.png)
+Element         | Style          |     Represents      |                   Example
+--------------: | :------------- | :-----------------: | :-----------------------------------------:
+ **node color** | _blue_         | func in focused pkg |    ![focused](images/legend_focused.png)
+                | _yellow_       |  func in other pkg  | ![nonfocused](images/legend_nonfocused.png)
+**node border** | _bold_         |    exported func    |   ![exported](images/legend_exported.png)
+                | _dotted_       |   anonymous func    |  ![anonymous](images/legend_anonymous.png)
+ **edge color** | _black_        |   internal calls    |    ![outside](images/legend_internal.png)
+                | _brown_        |   external calls    |    ![outside](images/legend_external.png)
+  **edge line** | _dashed_       |    dynamic calls    |    ![dynamic](images/legend_dynamic.png)
+**arrow shape** | _empty arrow_  |  concurrent calls   | ![concurrent](images/legend_concurrent.png)
+**arrow shape** | _empty circle_ |   deferred calls    |   ![deferred](images/legend_deferred.png)
 
 ## Examples
 
