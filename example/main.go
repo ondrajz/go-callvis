@@ -28,13 +28,13 @@ func main() {
 func direct() {
 	var i myIface = t
 	i.Dynamic()
-	t.Normal()
+	t.Static()
 }
 
 func deferred() {
-	defer t.Normal()
+	defer t.Static()
 }
 
 func concurrent() {
-	go t.Normal()
+	go t.Static()
 }
