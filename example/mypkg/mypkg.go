@@ -2,9 +2,9 @@ package mypkg
 
 type myType struct{}
 
-func New() *myType {
-	t := &myType{}
-	return t
+// Exported represents exported func
+func Exported() *myType {
+	return &myType{}
 }
 
 func (t *myType) Normal() {}

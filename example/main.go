@@ -7,9 +7,7 @@ import (
 	"github.com/TrueFurby/go-callvis/example/mypkg"
 )
 
-var (
-	t = mypkg.New()
-)
+var t = mypkg.Exported()
 
 type myIface interface {
 	Dynamic()
@@ -21,7 +19,13 @@ func init() {
 	}()
 }
 
-func Direct() {
+func main() {
+	defer deferred()
+	direct()
+	go concurrent()
+}
+
+func direct() {
 	var i myIface = t
 	i.Dynamic()
 	t.Normal()
@@ -33,10 +37,4 @@ func deferred() {
 
 func concurrent() {
 	go t.Normal()
-}
-
-func main() {
-	defer deferred()
-	Direct()
-	go concurrent()
 }
