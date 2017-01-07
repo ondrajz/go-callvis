@@ -1,4 +1,5 @@
-# go-callvis
+go-callvis
+==========
 
 **go-callvis** is a development tool to help visualize call graph of your Go program using Graphviz's dot format.
 
@@ -6,7 +7,8 @@
 
 Intended purpose of this tool is to provide a visual overview of your program's source code by using call graph and type relations. This is especially useful in larger projects where the complexity of the structure rises.
 
-## Features
+Features
+--------
 
 - **focus** specific **package** in program
 - **limit** to include only packages containing **prefix**
@@ -28,13 +30,16 @@ Ideal goal of this project is to make web app that would locally store the call 
 - [Go](https://golang.org/dl/)
 - [Graphviz](http://www.graphviz.org/Download..php)
 
-### Installation
+### Install
 
-To install the go-callvis, use the following:
+To install the go-callvis, use the following command:
 
-`go get -u -v github.com/TrueFurby/go-callvis`
+```
+go get -u -v github.com/TrueFurby/go-callvis
+```
 
-## Usage
+Usage
+-----
 
 ```
 go-callvis [OPTIONS] <main pkg>
@@ -64,7 +69,8 @@ Element         | Style          |     Represents      |                   Examp
 **arrow shape** | _empty arrow_  |  concurrent calls   | ![concurrent](images/legend_concurrent.png)
 **arrow shape** | _empty circle_ |   deferred calls    |   ![deferred](images/legend_deferred.png)
 
-## Examples
+Examples
+--------
 
 Here are usage examples for [syncthing](https://github.com/syncthing/syncthing) program.
 
@@ -96,13 +102,14 @@ go-callvis -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.
 go-callvis -ignore github.com/syncthing/syncthing/lib/logger -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
 ```
 
-## Known Issues
+Known Issues
+------------
 
-- **execution takes a lot of time (~5s), because currently:**
-
+**execution takes a lot of time (~5s), because currently:**
   - the call graph is always generated for the entire program
   - there is yet no caching of call graph data
 
-## Community
+Community
+---------
 
 Join the [#go-callvis](https://gophers.slack.com/archives/go-callvis) channel at [gophers.slack.com](http://gophers.slack.com)
