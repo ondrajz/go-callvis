@@ -5,23 +5,18 @@ go-callvis [![Go Report Card](https://goreportcard.com/badge/github.com/TrueFurb
 
 ![example](images/main.png)
 
-Intended purpose of this tool is to provide a visual overview of your program's source code by using call graph and type relations. This is especially useful in larger projects where the complexity of the structure rises.
+Intended purpose of this tool is to provide a visual overview of your program's source code structure by using call graph and type relations. This is especially useful in larger projects where the complexity of the code rises.
 
-Features
---------
+## Features
 
 - **focus** specific **package** in program
 - **limit** to include only packages containing **prefix**
+- **group** functions by **types or packages**
 - **ignore** multiple packages containing **prefix**
-- **group** functions by **types/packages**
 
 ### How it works
 
-It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with graphviz tools.
-
-### Project goal
-
-Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
+It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with Graphviz tools.
 
 ## Installation
 
@@ -32,14 +27,13 @@ Ideal goal of this project is to make web app that would locally store the call 
 
 ### Install
 
-To install the go-callvis, use the following command:
+Use the following command to install:
 
 ```
 go get -u -v github.com/TrueFurby/go-callvis
 ```
 
-Usage
------
+### Usage
 
 ```
 go-callvis [OPTIONS] <main pkg>
@@ -55,22 +49,34 @@ Options:
         subgraph by [type, pkg]
 ```
 
-### Legend
+## Legend
 
-Element         | Style          |     Represents      |                   Example
---------------: | :------------- | :-----------------: | :-----------------------------------------:
- **node color** | _blue_         | func in focused pkg |    ![focused](images/legend_focused.png)
-                | _yellow_       |  func in other pkg  | ![nonfocused](images/legend_nonfocused.png)
-**node border** | _bold_         |    exported func    |   ![exported](images/legend_exported.png)
-                | _dotted_       |   anonymous func    |  ![anonymous](images/legend_anonymous.png)
- **edge color** | _black_        |   internal calls    |    ![outside](images/legend_internal.png)
-                | _brown_        |   external calls    |    ![outside](images/legend_external.png)
-  **edge line** | _dashed_       |    dynamic calls    |    ![dynamic](images/legend_dynamic.png)
-**arrow shape** | _empty arrow_  |  concurrent calls   | ![concurrent](images/legend_concurrent.png)
-**arrow shape** | _empty circle_ |   deferred calls    |   ![deferred](images/legend_deferred.png)
+#### Packages
 
-Examples
---------
+Type        | Style          |                   Example
+----------: | :------------- | :-----------------------------------------:
+**focused** | _blue color_   |    ![focused](images/legend_focused.png)
+  **other** | _yellow color_ | ![nonfocused](images/legend_nonfocused.png)
+
+#### Functions (_nodes_)
+
+Type           | Style           |                  Example
+-------------: | :-------------- | :----------------------------------------:
+  **exported** | _bold border_   |  ![exported](images/legend_exported.png)
+**unexported** | _normal border_ | ![anonymous](images/legend_unexported.png)
+ **anonymous** | _dotted border_ | ![anonymous](images/legend_anonymous.png)
+
+#### Calls (_edges_)
+
+Type           | Style          |                   Example
+-------------: | :------------- | :-----------------------------------------:
+  **internal** | _black color_  |   ![outside](images/legend_internal.png)
+  **external** | _brown color_  |   ![outside](images/legend_external.png)
+   **dynamic** | _dashed line_  |    ![dynamic](images/legend_dynamic.png)
+**concurrent** | _empty arrow_  | ![concurrent](images/legend_concurrent.png)
+  **deferred** | _empty circle_ |   ![deferred](images/legend_deferred.png)
+
+## Examples
 
 Here are usage examples for [syncthing](https://github.com/syncthing/syncthing) program.
 
@@ -102,14 +108,17 @@ go-callvis -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.
 go-callvis -ignore github.com/syncthing/syncthing/lib/logger -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
 ```
 
-Known Issues
-------------
+## Roadmap
+
+Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
+
+## Known Issues
 
 **execution takes a lot of time (~5s), because currently:**
-  - the call graph is always generated for the entire program
-  - there is yet no caching of call graph data
 
-Community
----------
+- the call graph is always generated for the entire program
+- there is yet no caching of call graph data
+
+## Community
 
 Join the [#go-callvis](https://gophers.slack.com/archives/go-callvis) channel at [gophers.slack.com](http://gophers.slack.com)
