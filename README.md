@@ -40,13 +40,15 @@ go-callvis [OPTIONS] <main pkg>
 
 Options:
   -focus string
-        focus package name (default: main)
-  -ignore string
-        ignore package path
+        Focus package with name (default: main)
   -limit string
-        limit package path
-  -sub string
-        subgraph by [type, pkg]
+        Limit package path to prefix
+  -group string
+        Grouping by [type, pkg]
+  -ignore string
+        Ignore package paths with prefix (separated by comma)
+  -test bool
+        Include test code
 ```
 
 ## Legend
@@ -82,7 +84,7 @@ Here are usage examples for [syncthing](https://github.com/syncthing/syncthing) 
 
 ### Focusing package _upgrade_
 
-![syncthing example output](images/syncthing.png)
+![syncthing example output](images/syncthing_focus.png)
 
 ```
 go-callvis -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
@@ -90,12 +92,12 @@ go-callvis -focus upgrade -limit github.com/syncthing/syncthing github.com/synct
 
 --------------------------------------------------------------------------------
 
-### Grouping by packages
+### Grouping by _packages_
 
-![syncthing example output pkg](images/syncthing_pkg.png)
+![syncthing example output pkg](images/syncthing_group.png)
 
 ```
-go-callvis -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
+go-callvis -group pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
 ```
 
 --------------------------------------------------------------------------------
@@ -105,7 +107,7 @@ go-callvis -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.
 ![syncthing example output ignore](images/syncthing_ignore.png)
 
 ```
-go-callvis -ignore github.com/syncthing/syncthing/lib/logger -sub pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
+go-callvis -ignore github.com/syncthing/syncthing/lib/logger -group pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
 ```
 
 ## Roadmap
