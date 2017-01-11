@@ -1,40 +1,27 @@
 package main
 
-import (
-	"log"
-	"net/http"
+import "github.com/TrueFurby/go-callvis/example/mypkg"
 
-	"github.com/TrueFurby/go-callvis/example/mypkg"
-)
+func main() {
+	accessType()
+	callExecution()
+	invokeMode()
+}
 
-var t = mypkg.Exported()
+func accessType() {
+	mypkg.Exported()
+}
+
+func callExecution() {
+	mypkg.Regular()
+}
 
 type myIface interface {
 	Dynamic()
 }
 
-func init() {
-	go func() {
-		log.Fatal(http.ListenAndServe(":8000", nil))
-	}()
-}
-
-func main() {
-	defer deferred()
-	direct()
-	go concurrent()
-}
-
-func direct() {
-	var i myIface = t
+func invokeMode() {
+	mypkg.T.Static()
+	var i myIface = mypkg.T
 	i.Dynamic()
-	t.Static()
-}
-
-func deferred() {
-	defer t.Static()
-}
-
-func concurrent() {
-	go t.Static()
 }

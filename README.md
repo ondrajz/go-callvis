@@ -3,16 +3,17 @@ go-callvis [![Go Report Card](https://goreportcard.com/badge/github.com/TrueFurb
 
 **go-callvis** is a development tool to help visualize call graph of your Go program using Graphviz's dot format.
 
-![example](images/main.png)
+![example](images/example.png)
+> check [source code](example) for this example
 
 Intended purpose of this tool is to provide a visual overview of your program's source code structure by using call graph and type relations. This is especially useful in larger projects where the complexity of the code rises.
 
 ## Features
 
-- **focus** specific **package** in program
-- **limit** to include only packages containing **prefix**
-- **group** functions by **types or packages**
-- **ignore** multiple packages containing **prefix**
+- focus specific package in a program
+- group functions by types or packages
+- limit packages to custom prefix path
+- ignore packages containing custom prefix
 
 ### How it works
 
