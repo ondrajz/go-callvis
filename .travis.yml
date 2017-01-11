@@ -1,9 +1,8 @@
 language: go
-sudo: false
 
-matrix:
-    include:
-        - go: 1.5
-        - go: 1.6
-        - go: 1.7
-        - go: tip
+go:
+  - 1.7
+
+install: make get-deps
+
+script: make test
