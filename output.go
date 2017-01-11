@@ -39,7 +39,7 @@ func printOutput(cg *callgraph.Graph, focusPkg, limitPath string, ignorePaths []
 	var edges []string
 	edgeMap := make(map[string]struct{})
 
-	if err := callgraph.GraphVisitEdges(cg, func(edge *callgraph.Edge) error {
+	err := callgraph.GraphVisitEdges(cg, func(edge *callgraph.Edge) error {
 		caller := edge.Caller.Func
 		callee := edge.Callee.Func
 
@@ -61,14 +61,14 @@ func printOutput(cg *callgraph.Graph, focusPkg, limitPath string, ignorePaths []
 			}
 		}
 
-		callerProps := []string{}
+		props := make(properties)
 		callerSign := caller.Signature
 		if caller.Parent() != nil {
 			callerSign = caller.Parent().Signature
 		}
 		callerLabel := fmt.Sprintf("%s\n%s", caller.Pkg.Pkg.Name(), caller.RelString(caller.Pkg.Pkg))
 		if caller.Pkg.Pkg.Name() == focusPkg {
-			callerProps = append(callerProps, "fillcolor=lightblue")
+			props["fillcolor"] = "lightblue"
 			callerLabel = fmt.Sprintf("%s", caller.RelString(caller.Pkg.Pkg))
 			if subType && callerSign.Recv() != nil {
 				callerParts := strings.Split(callerLabel, ".")
@@ -77,31 +77,32 @@ func printOutput(cg *callgraph.Graph, focusPkg, limitPath string, ignorePaths []
 		} else if subPkg {
 			callerLabel = fmt.Sprintf("%s", caller.RelString(caller.Pkg.Pkg))
 		}
-		callerProps = append(callerProps, fmt.Sprintf("label=%q", callerLabel))
+		props["label"] = callerLabel
 		if caller.Parent() != nil {
-			callerProps = append(callerProps, "style=\"dotted,rounded,filled\"")
+			props["style"] = "dotted,rounded,filled"
 		} else if caller.Object() != nil && caller.Object().Exported() {
-			callerProps = append(callerProps, "style=\"bold,rounded,filled\"")
+			props["style"] = "bold,rounded,filled"
 		}
-		callerNode := fmt.Sprintf("%q [%s]", caller, strings.Join(callerProps, " "))
+		callerNode := fmt.Sprintf("%q [%s]", caller, props)
+
 		if subType && caller.Pkg.Pkg.Name() == focusPkg && callerSign.Recv() != nil {
 			parts := strings.Split(fmt.Sprint(callerSign.Recv().Type()), ".")
 			clusterLabel := parts[len(parts)-1]
-			callerNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
+			callerNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=%q; style=filled; fillcolor=snow; %s; }",
 				callerSign.Recv().Type(), clusterLabel, callerNode)
 		} else if subPkg && caller.Pkg.Pkg.Name() != focusPkg {
-			callerNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
+			callerNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=%q; style=filled; fillcolor=snow; %s; }",
 				caller.Pkg.Pkg.Name(), caller.Pkg.Pkg.Name(), callerNode)
 		}
 
-		calleeProps := []string{}
+		props = make(properties)
 		calleeSign := callee.Signature
 		if callee.Parent() != nil {
 			calleeSign = callee.Parent().Signature
 		}
 		calleeLabel := fmt.Sprintf("%s\n%s", callee.Pkg.Pkg.Name(), callee.RelString(callee.Pkg.Pkg))
 		if callee.Pkg.Pkg.Name() == focusPkg {
-			calleeProps = append(calleeProps, "fillcolor=lightblue")
+			props["fillcolor"] = "lightblue"
 			calleeLabel = fmt.Sprintf("%s", callee.RelString(callee.Pkg.Pkg))
 			if subType && calleeSign.Recv() != nil {
 				calleeParts := strings.Split(calleeLabel, ".")
@@ -110,46 +111,47 @@ func printOutput(cg *callgraph.Graph, focusPkg, limitPath string, ignorePaths []
 		} else if subPkg {
 			calleeLabel = fmt.Sprintf("%s", callee.RelString(callee.Pkg.Pkg))
 		}
-		calleeProps = append(calleeProps, fmt.Sprintf("label=%q", calleeLabel))
+		props["label"] = calleeLabel
 		if callee.Parent() != nil {
-			calleeProps = append(calleeProps, "style=\"dotted,rounded,filled\"")
+			props["style"] = "dotted,rounded,filled"
 		} else if callee.Object() != nil && callee.Object().Exported() {
-			calleeProps = append(calleeProps, "style=\"bold,rounded,filled\"")
+			props["style"] = "bold,rounded,filled"
 		}
-		calleeNode := fmt.Sprintf("%q [%s]", callee, strings.Join(calleeProps, " "))
+		calleeNode := fmt.Sprintf("%q [%s]", callee, props)
+
 		if subType && callee.Pkg.Pkg.Name() == focusPkg && calleeSign.Recv() != nil {
 			parts := strings.Split(fmt.Sprint(calleeSign.Recv().Type()), ".")
 			clusterLabel := parts[len(parts)-1]
-			calleeNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
+			calleeNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=%q; style=filled; fillcolor=snow; %s; }",
 				calleeSign.Recv().Type(), clusterLabel, calleeNode)
 		} else if subPkg && callee.Pkg.Pkg.Name() != focusPkg {
-			calleeNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=\"%s\"; style=filled; fillcolor=snow; %s; }",
+			calleeNode = fmt.Sprintf("subgraph \"cluster_%s\" { penwidth=0.5; fontsize=18; label=%q; style=filled; fillcolor=snow; %s; }",
 				callee.Pkg.Pkg.Name(), callee.Pkg.Pkg.Name(), calleeNode)
 		}
 
-		edgeProps := []string{}
+		props = make(properties)
 		if edge.Site != nil && edge.Site.Common().StaticCallee() == nil {
-			edgeProps = append(edgeProps, "style=dashed")
+			props["style"] = "dashed"
 		}
 		switch edge.Site.(type) {
 		case *ssa.Go:
-			edgeProps = append(edgeProps, "arrowhead=empty")
+			props["arrowhead"] = "empty"
 		case *ssa.Defer:
-			edgeProps = append(edgeProps, "arrowhead=odot")
+			props["arrowhead"] = "odot"
 		}
 		if callee.Pkg.Pkg.Name() != focusPkg || caller.Pkg.Pkg.Name() != focusPkg {
-			edgeProps = append(edgeProps, "color=saddlebrown")
+			props["color"] = "saddlebrown"
 		}
 		s := fmt.Sprintf("%s;%s; %q -> %q [%s]",
-			callerNode, calleeNode,
-			caller, callee, strings.Join(edgeProps, " "))
+			callerNode, calleeNode, caller, callee, props)
+
 		if _, ok := edgeMap[s]; !ok {
 			edges = append(edges, s)
 			edgeMap[s] = struct{}{}
 		}
-
 		return nil
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
 
@@ -166,4 +168,14 @@ func printOutput(cg *callgraph.Graph, focusPkg, limitPath string, ignorePaths []
 	}
 
 	return nil
+}
+
+type properties map[string]interface{}
+
+func (p properties) String() string {
+	l := []string{}
+	for k, v := range p {
+		l = append(l, fmt.Sprintf("%s=%q", k, v))
+	}
+	return strings.Join(l, " ")
 }
