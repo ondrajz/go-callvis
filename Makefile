@@ -1,3 +1,4 @@
+.PHONY: default install build test
 
 VERSION := $(shell git describe --dirty)
 LDFLAGS := -X main.Version=$(VERSION)
