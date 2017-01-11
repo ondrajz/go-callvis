@@ -22,14 +22,14 @@ type dotData struct {
 
 var dotTmpl = template.Must(template.New("digraph").Parse(`digraph G {
     label="{{.Title}}";
-    labelloc=t;
-    bgcolor=aliceblue;
-    rankdir=LR;
-    fontsize=22;
+    labelloc="t";
+    bgcolor="aliceblue";
+    rankdir="LR";
+    fontsize="22";
     fontname="Ubuntu";
     edge [minlen={{.Minlen}}];
     node [shape=box style="rounded,filled" fillcolor=wheat fontname="Ubuntu"];
-    {{range .Edges}}{{println .}}{{end}}
+{{range .Edges}}{{printf "\t%s\n" .}}{{end}}
 }`))
 
 func printOutput(cg *callgraph.Graph, focusPkg, limitPath string, ignorePaths []string, groupBy string, minlen uint) error {
@@ -142,7 +142,7 @@ func printOutput(cg *callgraph.Graph, focusPkg, limitPath string, ignorePaths []
 		if callee.Pkg.Pkg.Name() != focusPkg || caller.Pkg.Pkg.Name() != focusPkg {
 			props["color"] = "saddlebrown"
 		}
-		s := fmt.Sprintf("%s;%s; %q -> %q [%s]",
+		s := fmt.Sprintf("\n\t%s;\n\t%s;\n\t%q -> %q [%s]",
 			callerNode, calleeNode, caller, callee, props)
 
 		if _, ok := edgeMap[s]; !ok {
