@@ -28,3 +28,6 @@ _testmain.go
 
 # External packages folder
 vendor/
+
+# Builds
+build/
