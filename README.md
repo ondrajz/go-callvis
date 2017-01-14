@@ -1,4 +1,4 @@
-go-callvis [![Go Report Card](https://goreportcard.com/badge/github.com/TrueFurby/go-callvis)](https://goreportcard.com/report/github.com/TrueFurby/go-callvis) [![Build Status](https://travis-ci.org/TrueFurby/go-callvis.svg?branch=master)](https://travis-ci.org/TrueFurby/go-callvis) [![Slack](https://img.shields.io/badge/gophers%20slack-%23go--callvis-ff69b4.svg)](https://gophersinvite.herokuapp.com)
+go-callvis [![GitHub release](https://img.shields.io/github/release/truefurby/go-callvis.svg)](https://github.com/TrueFurby/go-callvis/releases) [![Build Status](https://travis-ci.org/TrueFurby/go-callvis.svg?branch=master)](https://travis-ci.org/TrueFurby/go-callvis) [![Slack](https://img.shields.io/badge/gophers%20slack-%23go--callvis-ff69b4.svg)](https://gophersinvite.herokuapp.com)
 ==========
 
 **go-callvis** is a development tool to help visualize call graph of your Go program using Graphviz's dot format.
