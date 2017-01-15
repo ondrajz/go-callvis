@@ -60,6 +60,7 @@ func main() {
 		}
 		if g != "pkg" && g != "type" {
 			fmt.Fprintf(os.Stderr, "go-callvis: %s\n", "invalid group option")
+			os.Exit(1)
 		}
 		groupBy[g] = true
 	}
