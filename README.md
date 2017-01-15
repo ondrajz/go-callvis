@@ -46,7 +46,7 @@ Options:
   -limit string
         Limit package path to prefix.
   -group string
-        Grouping by [type, pkg] (default: pkg; separated by comma).
+        Grouping by [type, pkg] (separated by comma).
   -ignore string
         Ignore package paths with prefix (separated by comma).
   -tests
