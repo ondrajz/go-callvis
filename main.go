@@ -20,10 +20,10 @@ import (
 var Version = "0.0.0-src"
 
 var (
-	focusFlag   = flag.String("focus", "main", "Focus package with name.")
+	focusFlag   = flag.String("focus", "main", "Focus package with name or import path.")
 	limitFlag   = flag.String("limit", "", "Limit package path to prefix.")
-	groupFlag   = flag.String("group", "", "Grouping by [type, pkg].")
-	ignoreFlag  = flag.String("ignore", "", "Ignore package paths with prefix (separated by comma).")
+	groupFlag   = flag.String("group", "", "Grouping functions by [pkg, type] (separate multiple by comma).")
+	ignoreFlag  = flag.String("ignore", "", "Ignore package paths with prefix (separate multiple by comma).")
 	testFlag    = flag.Bool("tests", false, "Include test code.")
 	debugFlag   = flag.Bool("debug", false, "Enable verbose log.")
 	versionFlag = flag.Bool("version", false, "Show version and exit.")

@@ -42,13 +42,13 @@ go-callvis [OPTIONS] <main pkg>
 
 Options:
   -focus string
-        Focus package with name (default: main).
+        Focus package with import path or name (default: main).
   -limit string
         Limit package path to prefix.
   -group string
-        Grouping by [type, pkg] (separated by comma).
+        Grouping functions by [pkg, type] (separate multiple by comma).
   -ignore string
-        Ignore package paths with prefix (separated by comma).
+        Ignore package paths with prefix (separate multiple by comma).
   -tests
         Include test code.
   -debug
