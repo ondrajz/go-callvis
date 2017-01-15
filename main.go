@@ -24,16 +24,18 @@ var (
 	limitFlag   = flag.String("limit", "", "Limit package path to prefix.")
 	groupFlag   = flag.String("group", "", "Grouping by [type, pkg].")
 	ignoreFlag  = flag.String("ignore", "", "Ignore package paths with prefix (separated by comma).")
-	testFlag    = flag.Bool("test", false, "Include test code.")
-	minlenFlag  = flag.Uint("minlen", 2, "Min length of an edge (for wider output).")
-	debugFlag   = flag.Bool("debug", false, "Enable debug mode.")
+	testFlag    = flag.Bool("tests", false, "Include test code.")
+	debugFlag   = flag.Bool("debug", false, "Enable verbose log.")
 	versionFlag = flag.Bool("version", false, "Show version and exit.")
-	// deprecated
-	subFlag = flag.String("sub", "", "Deprecated!!! Use 'group' instead!")
 )
 
 func main() {
+	// Graphviz options
+	flag.UintVar(&minlen, "minlen", 2, "Minimum edge length (for wider output).")
+	flag.Float64Var(&nodesep, "nodesep", 0.35, "Minimum space between two adjacent nodes in the same rank (for taller output).")
+
 	flag.Parse()
+
 	if *versionFlag {
 		fmt.Fprintf(os.Stderr, "go-callvis %s\n", Version)
 		os.Exit(0)
@@ -42,13 +44,7 @@ func main() {
 		log.SetFlags(log.Lmicroseconds)
 	}
 
-	// migrate deprecated
-	if *subFlag != "" {
-		fmt.Fprintln(os.Stderr, "Warning! Using 'sub' flag is deprecated, use 'group' instead!")
-		groupFlag = subFlag
-	}
-
-	var ignorePaths []string
+	ignorePaths := []string{}
 	for _, p := range strings.Split(*ignoreFlag, ",") {
 		p = strings.TrimSpace(p)
 		if p != "" {
@@ -56,13 +52,25 @@ func main() {
 		}
 	}
 
-	if err := run(&build.Default, *focusFlag, *limitFlag, *groupFlag, ignorePaths, *minlenFlag, *testFlag, flag.Args()); err != nil {
+	groupBy := make(map[string]bool)
+	for _, g := range strings.Split(*groupFlag, ",") {
+		g := strings.TrimSpace(g)
+		if g == "" {
+			continue
+		}
+		if g != "pkg" && g != "type" {
+			fmt.Fprintf(os.Stderr, "go-callvis: %s\n", "invalid group option")
+		}
+		groupBy[g] = true
+	}
+
+	if err := run(&build.Default, *focusFlag, *limitFlag, groupBy, ignorePaths, *testFlag, flag.Args()); err != nil {
 		fmt.Fprintf(os.Stderr, "go-callvis: %s\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctxt *build.Context, focusPkg, limitPath, groupBy string, ignorePaths []string, minlen uint, tests bool, args []string) error {
+func run(ctxt *build.Context, focusPkg, limitPath string, groupBy map[string]bool, ignorePaths []string, tests bool, args []string) error {
 	conf := loader.Config{Build: ctxt}
 
 	if len(args) == 0 {
@@ -78,36 +86,36 @@ func run(ctxt *build.Context, focusPkg, limitPath, groupBy string, ignorePaths [
 	if err != nil {
 		return err
 	}
+	logf("load took: %v", time.Since(t0))
+
+	t0 = time.Now()
 	prog := ssautil.CreateProgram(iprog, 0)
 	prog.Build()
-	logf("program build took: %v", time.Since(t0))
+	logf("build took: %v", time.Since(t0))
 
 	t0 = time.Now()
 	mains, err := mainPackages(prog, tests)
 	if err != nil {
 		return err
 	}
-	config := &pointer.Config{
+	logf("%d mains", len(mains))
+	ptrcfg := &pointer.Config{
 		Mains:          mains,
 		BuildCallGraph: true,
 	}
-	result, err := pointer.Analyze(config)
+	result, err := pointer.Analyze(ptrcfg)
 	if err != nil {
 		return err
 	}
-	result.CallGraph.DeleteSyntheticNodes()
-	logf("callgraph analysis took: %v", time.Since(t0))
+	logf("analysis took: %v", time.Since(t0))
 
-	if err := printOutput(result.CallGraph,
-		focusPkg, limitPath, ignorePaths, groupBy, minlen); err != nil {
-		return err
-	}
-
-	return nil
+	return printOutput(mains[0].Pkg, result.CallGraph,
+		focusPkg, limitPath, ignorePaths, groupBy)
 }
 
 func mainPackages(prog *ssa.Program, tests bool) ([]*ssa.Package, error) {
 	pkgs := prog.AllPackages()
+	logf("%d packages", len(pkgs))
 
 	var mains []*ssa.Package
 	if tests {

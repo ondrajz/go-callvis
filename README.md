@@ -3,15 +3,14 @@ go-callvis [![GitHub release](https://img.shields.io/github/release/truefurby/go
 
 **go-callvis** is a development tool to help visualize call graph of your Go program using Graphviz's dot format.
 
-![example](images/example.png)
-> check [source code](example) for this example
+![main](examples/images/main.png)
 
 Intended purpose of this tool is to provide a visual overview of your program's source code structure by using call graph and type relations. This is especially useful in larger projects where the complexity of the code rises.
 
 ## Features
 
 - focus specific package in a program
-- group functions by types or packages
+- group funcs by packages and/or types
 - limit packages to custom prefix path
 - ignore packages containing custom prefix
 
@@ -28,10 +27,12 @@ It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to c
 
 ### Install
 
-Use the following command to install:
+Use the following commands to install:
 
 ```
-go get -u -v github.com/TrueFurby/go-callvis
+go get -u github.com/TrueFurby/go-callvis
+cd $GOPATH/src/github.com/TrueFurby/go-callvis
+make
 ```
 
 ### Usage
@@ -41,75 +42,71 @@ go-callvis [OPTIONS] <main pkg>
 
 Options:
   -focus string
-        Focus package with name (default: main)
+        Focus package with name (default: main).
   -limit string
-        Limit package path to prefix
+        Limit package path to prefix.
   -group string
-        Grouping by [type, pkg]
+        Grouping by [type, pkg] (default: pkg; separated by comma).
   -ignore string
-        Ignore package paths with prefix (separated by comma)
-  -test bool
-        Include test code
+        Ignore package paths with prefix (separated by comma).
+  -tests
+        Include test code.
+  -debug
+        Enable verbose log.
+  -version
+        Show version and exit.
 ```
 
 ## Legend
 
-#### Packages
+### Packages & Types
 
-Type        | Style          |                   Example
-----------: | :------------- | :-----------------------------------------:
-**focused** | _blue color_   |    ![focused](images/legend_focused.png)
-  **other** | _yellow color_ | ![nonfocused](images/legend_nonfocused.png)
+> Presented as subgraphs (clusters).
 
-#### Functions (_nodes_)
+- **packages** have _normal corners_ and _label on the top_
+- **types** have _rounded corners_ with _label on the bottom_
 
-Type           | Style           |                  Example
--------------: | :-------------- | :----------------------------------------:
-  **exported** | _bold border_   |  ![exported](images/legend_exported.png)
-**unexported** | _normal border_ | ![anonymous](images/legend_unexported.png)
- **anonymous** | _dotted border_ | ![anonymous](images/legend_anonymous.png)
+Represents  | Style
+----------: | :-------------
+  `focused` | _blue color_
+   `stdlib` | _green color_ :collision: **NEW!**
+    `other` | _yellow color_
 
-#### Calls (_edges_)
+### Functions
 
-Type           | Style          |                   Example
--------------: | :------------- | :-----------------------------------------:
-  **internal** | _black color_  |   ![outside](images/legend_internal.png)
-  **external** | _brown color_  |   ![outside](images/legend_external.png)
-   **dynamic** | _dashed line_  |    ![dynamic](images/legend_dynamic.png)
-**concurrent** | _empty arrow_  | ![concurrent](images/legend_concurrent.png)
-  **deferred** | _empty circle_ |   ![deferred](images/legend_deferred.png)
+> Presented as nodes.
+
+Represents   | Style
+-----------: | :--------------
+  `exported` | _bold border_
+`unexported` | _normal border_
+ `anonymous` | _dotted border_
+
+### Calls
+
+> Presented as edges.
+
+Represents   | Style
+-----------: | :-------------
+  `internal` | _black color_
+  `external` | _brown color_
+    `static` | _solid line_
+   `dynamic` | _dashed line_
+   `regular` | _simple arrow_
+`concurrent` | ~~_empty arrow_~~ _arrow with empty circle_ :warning:
+  `deferred` | ~~_empty circle_~~ _arrow with empty diamond_ :warning:
 
 ## Examples
 
-Here are usage examples for [syncthing](https://github.com/syncthing/syncthing) program.
+Here is example for project [syncthing](https://github.com/syncthing/syncthing).
 
-### Focusing package _upgrade_
-
-![syncthing example output](images/syncthing_focus.png)
+![syncthing example](examples/images/syncthing.png)
 
 ```
-go-callvis -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
+go-callvis -focus upgrade -group pkg,type -limit github.com/syncthing/syncthing -ignore github.com/syncthing/syncthing/lib/logger github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
 ```
 
---------------------------------------------------------------------------------
-
-### Grouping by _packages_
-
-![syncthing example output pkg](images/syncthing_group.png)
-
-```
-go-callvis -group pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
-```
-
---------------------------------------------------------------------------------
-
-### Ignoring package _logger_
-
-![syncthing example output ignore](images/syncthing_ignore.png)
-
-```
-go-callvis -ignore github.com/syncthing/syncthing/lib/logger -group pkg -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
-```
+You can find more examples in the folder [examples](examples).
 
 ## Roadmap
 
@@ -117,7 +114,7 @@ Ideal goal of this project is to make web app that would locally store the call 
 
 ## Known Issues
 
-**execution takes a lot of time (~5s), because currently:**
+**execution takes a lot of time, because currently:**
 
 - the call graph is always generated for the entire program
 - there is yet no caching of call graph data
