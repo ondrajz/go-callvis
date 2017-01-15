@@ -71,35 +71,78 @@ func main() {
 	}
 }
 
-func run(ctxt *build.Context, focusPkg, limitPath string, groupBy map[string]bool, ignorePaths []string, tests bool, args []string) error {
-	conf := loader.Config{Build: ctxt}
-
+func run(ctxt *build.Context, focus, limitPath string, groupBy map[string]bool, ignorePaths []string, tests bool, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("missing arguments")
 	}
 
 	t0 := time.Now()
+	conf := loader.Config{Build: ctxt}
 	_, err := conf.FromArgs(args, tests)
 	if err != nil {
 		return err
 	}
-	iprog, err := conf.Load()
+	load, err := conf.Load()
 	if err != nil {
 		return err
 	}
-	logf("load took: %v", time.Since(t0))
+	logf("loading took: %v", time.Since(t0))
+	logf("%d imported (%d created)", len(load.Imported), len(load.Created))
 
 	t0 = time.Now()
-	prog := ssautil.CreateProgram(iprog, 0)
+	prog := ssautil.CreateProgram(load, 0)
 	prog.Build()
-	logf("build took: %v", time.Since(t0))
+	pkgs := prog.AllPackages()
+	logf("building took: %v", time.Since(t0))
+
+	var focusPkg *build.Package
+	if focus != "" {
+		focusPkg, err = conf.Build.Import(focus, "", 0)
+		if err != nil {
+			if strings.Contains(focus, "/") {
+				return err
+			}
+			// try to find package by name
+			var foundPaths []string
+			for _, p := range pkgs {
+				if p.Pkg.Name() == focus {
+					foundPaths = append(foundPaths, p.Pkg.Path())
+				}
+			}
+			if len(foundPaths) == 0 {
+				return err
+			} else if len(foundPaths) > 1 {
+				for _, p := range foundPaths {
+					fmt.Fprintf(os.Stderr, " - %s\n", p)
+				}
+				return fmt.Errorf("found %d packages with name %q, use import path not name", len(foundPaths), focus)
+			}
+			if focusPkg, err = conf.Build.Import(foundPaths[0], "", 0); err != nil {
+				return err
+			}
+		}
+		logf("focusing: %v", focusPkg.ImportPath)
+	}
+
+	var mains []*ssa.Package
+	if tests {
+		for _, pkg := range pkgs {
+			if main := prog.CreateTestMainPackage(pkg); main != nil {
+				mains = append(mains, main)
+			}
+		}
+		if mains == nil {
+			return fmt.Errorf("no tests")
+		}
+	} else {
+		mains = append(mains, ssautil.MainPackages(pkgs)...)
+		if len(mains) == 0 {
+			return fmt.Errorf("no main packages")
+		}
+	}
+	logf("%d packages (%d main)", len(pkgs), len(mains))
 
 	t0 = time.Now()
-	mains, err := mainPackages(prog, tests)
-	if err != nil {
-		return err
-	}
-	logf("%d mains", len(mains))
 	ptrcfg := &pointer.Config{
 		Mains:          mains,
 		BuildCallGraph: true,
@@ -112,31 +155,6 @@ func run(ctxt *build.Context, focusPkg, limitPath string, groupBy map[string]boo
 
 	return printOutput(mains[0].Pkg, result.CallGraph,
 		focusPkg, limitPath, ignorePaths, groupBy)
-}
-
-func mainPackages(prog *ssa.Program, tests bool) ([]*ssa.Package, error) {
-	pkgs := prog.AllPackages()
-	logf("%d packages", len(pkgs))
-
-	var mains []*ssa.Package
-	if tests {
-		for _, pkg := range pkgs {
-			if main := prog.CreateTestMainPackage(pkg); main != nil {
-				mains = append(mains, main)
-			}
-		}
-		if mains == nil {
-			return nil, fmt.Errorf("no tests")
-		}
-		return mains, nil
-	}
-
-	mains = append(mains, ssautil.MainPackages(pkgs)...)
-	if len(mains) == 0 {
-		return nil, fmt.Errorf("no main packages")
-	}
-
-	return mains, nil
 }
 
 func logf(f string, a ...interface{}) {

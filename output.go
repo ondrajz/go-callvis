@@ -14,17 +14,21 @@ import (
 
 var output io.Writer = os.Stdout
 
-func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg, limitPath string, ignorePaths []string, groupBy map[string]bool) error {
+func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package, limitPath string, ignorePaths []string, groupBy map[string]bool) error {
 	groupType := groupBy["type"]
 	groupPkg := groupBy["pkg"]
 
 	cluster := NewDotCluster("focus")
 	cluster.Attrs = dotAttrs{
-		"label":     focusPkg,
-		"bgcolor":   "aliceblue",
+		"bgcolor":   "white",
+		"label":     "",
 		"labelloc":  "t",
 		"labeljust": "c",
 		"fontsize":  "18",
+	}
+	if focusPkg != nil {
+		cluster.Attrs["bgcolor"] = "#e6ecfa"
+		cluster.Attrs["label"] = focusPkg.Name
 	}
 
 	nodes := []*dotNode{}
@@ -48,8 +52,8 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg, limitPat
 		calleePkg := callee.Func.Pkg.Pkg
 
 		// focus specific pkg
-		if focusPkg != "" &&
-			!(callerPkg.Name() == focusPkg || calleePkg.Name() == focusPkg) {
+		if focusPkg != nil &&
+			!(callerPkg.Path() == focusPkg.ImportPath || calleePkg.Path() == focusPkg.ImportPath) {
 			return nil
 		}
 
@@ -74,6 +78,8 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg, limitPat
 				return n
 			}
 
+			isFocused := focusPkg != nil &&
+				node.Func.Pkg.Pkg.Path() == focusPkg.ImportPath
 			attrs := make(dotAttrs)
 
 			// node label
@@ -93,16 +99,16 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg, limitPat
 
 			pkg, _ := build.Import(node.Func.Pkg.Pkg.Path(), "", 0)
 			// set node color
-			if pkg.Goroot {
-				attrs["fillcolor"] = "#adedad"
-			} else if node.Func.Pkg.Pkg.Name() == focusPkg {
+			if isFocused {
 				attrs["fillcolor"] = "lightblue"
+			} else if pkg.Goroot {
+				attrs["fillcolor"] = "#adedad"
 			} else {
-				attrs["fillcolor"] = "wheat"
+				attrs["fillcolor"] = "moccasin"
 			}
 
 			// include pkg name
-			if !groupPkg && node.Func.Pkg.Pkg.Name() != focusPkg {
+			if !groupPkg && !isFocused {
 				label = fmt.Sprintf("%s\n%s", node.Func.Pkg.Pkg.Name(), label)
 			}
 
@@ -120,7 +126,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg, limitPat
 			c := cluster
 
 			// group by pkg
-			if groupPkg && node.Func.Pkg.Pkg.Name() != focusPkg {
+			if groupPkg && !isFocused {
 				label := node.Func.Pkg.Pkg.Name()
 				if pkg.Goroot {
 					label = node.Func.Pkg.Pkg.Path()
@@ -135,7 +141,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg, limitPat
 							"fontsize":  "16",
 							"label":     label,
 							"style":     "filled",
-							"fillcolor": "snow",
+							"fillcolor": "lightyellow",
 						},
 					}
 					if pkg.Goroot {
@@ -148,10 +154,6 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg, limitPat
 			// group by type
 			if groupType && sign.Recv() != nil {
 				label := strings.Split(node.Func.RelString(node.Func.Pkg.Pkg), ".")[0]
-				fillclr := "lemonchiffon"
-				if node.Func.Pkg.Pkg.Name() == focusPkg {
-					fillclr = "lavender"
-				}
 				key := sign.Recv().Type().String()
 				if _, ok := c.Clusters[key]; !ok {
 					c.Clusters[key] = &dotCluster{
@@ -164,11 +166,13 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg, limitPat
 							"label":     label,
 							"labelloc":  "b",
 							"style":     "rounded,filled",
-							"fillcolor": fillclr,
+							"fillcolor": "wheat2",
 						},
 					}
-					if pkg.Goroot {
-						c.Clusters[key].Attrs["fillcolor"] = "#c4ecc4"
+					if isFocused {
+						c.Clusters[key].Attrs["fillcolor"] = "lightsteelblue"
+					} else if pkg.Goroot {
+						c.Clusters[key].Attrs["fillcolor"] = "#c2e3c2"
 					}
 				}
 				c = c.Clusters[key]
@@ -208,8 +212,8 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg, limitPat
 		}
 
 		// colorize calls outside focused pkg
-		if focusPkg != "" &&
-			(calleePkg.Name() != focusPkg || callerPkg.Name() != focusPkg) {
+		if focusPkg != nil &&
+			(calleePkg.Path() != focusPkg.ImportPath || callerPkg.Path() != focusPkg.ImportPath) {
 			attrs["color"] = "saddlebrown"
 		}
 
