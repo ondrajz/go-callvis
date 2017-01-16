@@ -5,9 +5,9 @@ go-callvis [![GitHub release](https://img.shields.io/github/release/truefurby/go
 
 ![main](examples/images/main.png)
 
-Intended purpose of this tool is to provide a visual overview of your program's source code structure by using call graph and type relations. This is especially useful in larger projects where the complexity of the code rises.
+Intended purpose of this tool is to provide a visual overview of function calls of your program by using call graph, package and type relations. This is especially useful in larger projects where the complexity of the code rises or when you are trying to understand someone else's code.
 
-## Features
+### Features
 
 - focus specific package in a program
 - group funcs by packages and/or types
