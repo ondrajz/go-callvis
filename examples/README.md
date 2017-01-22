@@ -1,10 +1,12 @@
 # Examples
 
-## Syncthing - [github.com/syncthing/syncthing](https://github.com/syncthing/syncthing)
+## Projects
 
-### Focusing package _upgrade_
+### [Syncthing](https://github.com/syncthing/syncthing)
 
-![syncthing example output](images/syncthing_focus.png)
+#### Focusing package _upgrade_
+
+[![syncthing example output](../images/syncthing_focus.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/syncthing_focus.png)
 
 ```
 go-callvis -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing_focus.png
@@ -12,9 +14,9 @@ go-callvis -focus upgrade -limit github.com/syncthing/syncthing github.com/synct
 
 --------------------------------------------------------------------------------
 
-### Grouping by _packages_
+#### Grouping by _packages_
 
-![syncthing example output pkg](images/syncthing_group.png)
+[![syncthing example output pkg](../images/syncthing_group.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/syncthing_group.png)
 
 ```
 go-callvis -focus upgrade -group pkg -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing_group.png
@@ -22,9 +24,9 @@ go-callvis -focus upgrade -group pkg -limit github.com/syncthing/syncthing githu
 
 --------------------------------------------------------------------------------
 
-### Ignoring package _logger_
+#### Ignoring package _logger_
 
-![syncthing example output ignore](images/syncthing_ignore.png)
+[![syncthing example output ignore](../images/syncthing_ignore.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/syncthing_ignore.png)
 
 ```
 go-callvis -focus upgrade -group pkg -ignore github.com/syncthing/syncthing/lib/logger -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing_ignore.png
