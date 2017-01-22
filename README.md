@@ -1,10 +1,12 @@
 <p align="center"><img src="images/gopher.png" alt="gopher"></p>
 
-<p align="center">
-  <a href="https://github.com/TrueFurby/go-callvis/releases"><img src="https://img.shields.io/github/release/truefurby/go-callvis.svg" alt="Github release"></a> <a href="https://travis-ci.org/TrueFurby/go-callvis"><img src="https://travis-ci.org/TrueFurby/go-callvis.svg?branch=master" alt="Build status"></a> <a href="https://gophers.slack.com/archives/go-callvis"><img src="https://img.shields.io/badge/gophers%20slack-%23go--callvis-ff69b4.svg" alt="Slack channel"></a>
-</p>
-
 # <div align="center">go-callvis</div>
+
+<p align="center">
+  <a href="https://github.com/TrueFurby/go-callvis/releases"><img src="https://img.shields.io/github/release/truefurby/go-callvis.svg" alt="Github release"></a>
+  <a href="https://travis-ci.org/TrueFurby/go-callvis"><img src="https://travis-ci.org/TrueFurby/go-callvis.svg?branch=master" alt="Build status"></a>
+  <a href="https://gophers.slack.com/archives/go-callvis"><img src="https://img.shields.io/badge/gophers%20slack-%23go--callvis-ff69b4.svg" alt="Slack channel"></a>
+</p>
 
 <p align="center"><b>go-callvis</b> is a development tool to help visualize call graph of your Go program using Graphviz's dot format.</p>
 
