@@ -23,17 +23,17 @@ Purpose of this tool is to provide a visual overview of your program by using th
 - limit packages to custom prefix path
 - ignore packages containing custom prefix
 
-#### How it works
-
-It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with Graphviz tools.
-
-## Output preview
+### Output preview
 
 [![main](images/main.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/main.png)
 
 > Check out the [source code](examples/main) for the above image.
 
-### Reference guide
+#### How it works
+
+It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with Graphviz tools.
+
+## Reference guide
 
 Here is a list of descriptions for all possible kinds of calls and groups.
 
@@ -81,7 +81,7 @@ Represents   | Style
 
 ## Quick start
 
-### Requirements
+#### Requirements
 
 - [Go](https://golang.org/dl/)
 - [Graphviz](http://www.graphviz.org/Download..php)
@@ -117,7 +117,7 @@ Here is example for the project [syncthing](https://github.com/syncthing/syncthi
 
 [![syncthing example](images/syncthing.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/syncthing.png)
 
-You can find more examples [here](examples).
+> Check out [more examples](examples) and used command options.
 
 ## Community
 
