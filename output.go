@@ -14,7 +14,7 @@ import (
 
 var output io.Writer = os.Stdout
 
-func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package, limitPath string, ignorePaths []string, groupBy map[string]bool) error {
+func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package, limitPaths, ignorePaths []string, groupBy map[string]bool) error {
 	groupType := groupBy["type"]
 	groupPkg := groupBy["pkg"]
 
@@ -39,6 +39,32 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 
 	cg.DeleteSyntheticNodes()
 
+	logf("%d limit prefixes: %v", len(limitPaths), limitPaths)
+	logf("%d ignore prefixes: %v", len(ignorePaths), ignorePaths)
+
+	var inLimit = func(from, to *callgraph.Node) bool {
+		if len(limitPaths) == 0 {
+			return true
+		}
+		var fromOk, toOk bool
+		fromPath := from.Func.Pkg.Pkg.Path()
+		toPath := to.Func.Pkg.Pkg.Path()
+		for _, p := range limitPaths {
+			if strings.HasPrefix(fromPath, p) {
+				fromOk = true
+			}
+			if strings.HasPrefix(toPath, p) {
+				toOk = true
+			}
+			if fromOk && toOk {
+				logf("in limit: %s -> %s", from, to)
+				return true
+			}
+		}
+		logf("NOT in limit: %s -> %s", from, to)
+		return false
+	}
+
 	err := callgraph.GraphVisitEdges(cg, func(edge *callgraph.Edge) error {
 		caller := edge.Caller
 		callee := edge.Callee
@@ -57,9 +83,8 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 			return nil
 		}
 
-		// limit to path prefix
-		if !(strings.HasPrefix(callerPkg.Path(), limitPath) &&
-			strings.HasPrefix(calleePkg.Path(), limitPath)) {
+		// limit path prefixes
+		if !inLimit(caller, callee) {
 			return nil
 		}
 

@@ -20,8 +20,8 @@ Purpose of this tool is to provide a visual overview of your program by using th
 
 - focus specific package in a program
 - group functions by package and methods by type
-- limit packages to custom prefix path
-- ignore packages containing custom prefix
+- limit packages to custom path prefixes
+- ignore packages containing path prefixes
 
 ### Output preview
 
@@ -100,11 +100,11 @@ Represents   | Style
 -focus string
       Focus package with import path or name. (default: main)
 -limit string
-      Limit package path to prefix.
+      Limit package paths to prefix. (separate multiple by comma)
 -group string
-      Grouping functions by [pkg, type] (separate multiple by comma).
+      Grouping functions by [pkg, type]. (separate multiple by comma)
 -ignore string
-      Ignore package paths with prefix (separate multiple by comma).
+      Ignore package paths with prefix. (separate multiple by comma)
 -minlen uint
       Minimum edge length (for wider output). (default: 2)
 -nodesep float

@@ -21,7 +21,7 @@ var Version = "0.0.0-src"
 
 var (
 	focusFlag   = flag.String("focus", "main", "Focus package with name or import path.")
-	limitFlag   = flag.String("limit", "", "Limit package path to prefix.")
+	limitFlag   = flag.String("limit", "", "Limit package paths to prefix. (separate multiple by comma)")
 	groupFlag   = flag.String("group", "", "Grouping functions by [pkg, type] (separate multiple by comma).")
 	ignoreFlag  = flag.String("ignore", "", "Ignore package paths with prefix (separate multiple by comma).")
 	testFlag    = flag.Bool("tests", false, "Include test code.")
@@ -44,14 +44,6 @@ func main() {
 		log.SetFlags(log.Lmicroseconds)
 	}
 
-	ignorePaths := []string{}
-	for _, p := range strings.Split(*ignoreFlag, ",") {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			ignorePaths = append(ignorePaths, p)
-		}
-	}
-
 	groupBy := make(map[string]bool)
 	for _, g := range strings.Split(*groupFlag, ",") {
 		g := strings.TrimSpace(g)
@@ -65,13 +57,29 @@ func main() {
 		groupBy[g] = true
 	}
 
-	if err := run(&build.Default, *focusFlag, *limitFlag, groupBy, ignorePaths, *testFlag, flag.Args()); err != nil {
+	limitPaths := []string{}
+	for _, p := range strings.Split(*limitFlag, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			limitPaths = append(limitPaths, p)
+		}
+	}
+
+	ignorePaths := []string{}
+	for _, p := range strings.Split(*ignoreFlag, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			ignorePaths = append(ignorePaths, p)
+		}
+	}
+
+	if err := run(&build.Default, *focusFlag, groupBy, limitPaths, ignorePaths, *testFlag, flag.Args()); err != nil {
 		fmt.Fprintf(os.Stderr, "go-callvis: %s\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctxt *build.Context, focus, limitPath string, groupBy map[string]bool, ignorePaths []string, tests bool, args []string) error {
+func run(ctxt *build.Context, focus string, groupBy map[string]bool, limitPaths, ignorePaths []string, tests bool, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("missing arguments")
 	}
@@ -154,7 +162,7 @@ func run(ctxt *build.Context, focus, limitPath string, groupBy map[string]bool, 
 	logf("analysis took: %v", time.Since(t0))
 
 	return printOutput(mains[0].Pkg, result.CallGraph,
-		focusPkg, limitPath, ignorePaths, groupBy)
+		focusPkg, limitPaths, ignorePaths, groupBy)
 }
 
 func logf(f string, a ...interface{}) {
