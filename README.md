@@ -29,21 +29,21 @@ Purpose of this tool is to provide a visual overview of your program by using th
 
 > Check out the [source code](examples/main) for the above image.
 
-#### How it works
+### How it works
 
 It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with Graphviz tools.
 
 ## Reference guide
 
-Here is a list of descriptions for all possible kinds of calls and groups.
+Here you can find descriptions for all possible kinds of calls and groups.
 
-#### Packages / Types
+### Packages / Types
 
 ###### Represented as subgraphs (clusters) in output.
 
 **Packages**
 - _**normal** corners_
-- _label on the *top*_
+- _label on the **top**_
 
 **Types**
 - _**rounded** corners_
@@ -55,7 +55,7 @@ Represents  | Style
    `stdlib` | _**green** color_
     `other` | _**yellow** color_
 
-#### Functions / Methods
+### Functions / Methods
 
 ###### Represented as nodes in output.
 
@@ -65,7 +65,7 @@ Represents   | Style
 `unexported` | _**normal** border_
  `anonymous` | _**dotted** border_
 
-#### Calls
+### Calls
 
 ###### Represented as edges in output.
 
@@ -113,7 +113,7 @@ Represents   | Style
 
 ## Examples
 
-Here is example for the project [syncthing](https://github.com/syncthing/syncthing).
+Here is an example for the project [syncthing](https://github.com/syncthing/syncthing).
 
 [![syncthing example](images/syncthing.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/syncthing.png)
 
@@ -139,8 +139,8 @@ Feel free to open [new issue](https://github.com/TrueFurby/go-callvis/issues/new
 
 ---
 
-#### Roadmap
+### Roadmap
 
-##### The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/TrueFurby/goexplorer)! :boom:
+#### The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/TrueFurby/goexplorer)! :boom:
 
 > Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
