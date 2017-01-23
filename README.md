@@ -10,16 +10,16 @@
 
 <p align="center"><b>go-callvis</b> is a development tool to help visualize call graph of your Go program using Graphviz's dot format.</p>
 
-[![main](images/main.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/main.png)
+---
 
 ## Introduction
 
-Intended purpose of this tool is to provide a visual overview of function calls of your program by using call graph, package and type relations. This is especially useful in larger projects where the complexity of the code rises or when you are trying to understand someone else's code.
+Purpose of this tool is to provide a visual overview of your program by using the data from call graph and its relations with packages and types. This is especially useful in larger projects where the complexity of the code rises or when you are just simply trying to understand code structure of somebody else.
 
 ### Features
 
 - focus specific package in a program
-- group funcs by packages and/or types
+- group functions by package and methods by type
 - limit packages to custom prefix path
 - ignore packages containing custom prefix
 
@@ -27,123 +27,120 @@ Intended purpose of this tool is to provide a visual overview of function calls 
 
 It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with Graphviz tools.
 
-## Get started
+## Output preview
+
+[![main](images/main.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/main.png)
+
+> Check out the [source code](examples/main) for the above image.
+
+### Reference guide
+
+Here is a list of descriptions for all possible kinds of calls and groups.
+
+#### Packages / Types
+
+###### Represented as subgraphs (clusters) in output.
+
+**Packages**
+- _**normal** corners_
+- _label on the *top*_
+
+**Types**
+- _**rounded** corners_
+- _label on the **bottom**_
+
+Represents  | Style
+----------: | :-------------
+  `focused` | _**blue** color_
+   `stdlib` | _**green** color_
+    `other` | _**yellow** color_
+
+#### Functions / Methods
+
+###### Represented as nodes in output.
+
+Represents   | Style
+-----------: | :--------------
+  `exported` | _**bold** border_
+`unexported` | _**normal** border_
+ `anonymous` | _**dotted** border_
+
+#### Calls
+
+###### Represented as edges in output.
+
+Represents   | Style
+-----------: | :-------------
+  `internal` | _**black** color_
+  `external` | _**brown** color_
+    `static` | _**solid** line_
+   `dynamic` | _**dashed** line_
+   `regular` | _**simple** arrow_
+`concurrent` | _arrow with **circle**_
+  `deferred` | _arrow with **diamond**_
+
+## Quick start
 
 ### Requirements
 
 - [Go](https://golang.org/dl/)
 - [Graphviz](http://www.graphviz.org/Download..php)
 
-### Install
+### Installation
 
-Use the following commands to install:
-
-```
-go get -u github.com/TrueFurby/go-callvis
-cd $GOPATH/src/github.com/TrueFurby/go-callvis
-make
-```
+`go get -u github.com/TrueFurby/go-callvis`
 
 ### Usage
 
+`go-callvis [OPTIONS] <main pkg>`
+
+### Options
+
 ```
-go-callvis [OPTIONS] <main pkg>
-
-Options:
-  -focus string
-        Focus package with import path or name (default: main).
-  -limit string
-        Limit package path to prefix.
-  -group string
-        Grouping functions by [pkg, type] (separate multiple by comma).
-  -ignore string
-        Ignore package paths with prefix (separate multiple by comma).
-  -tests
-        Include test code.
-  -debug
-        Enable verbose log.
-  -version
-        Show version and exit.
+-focus string
+      Focus package with import path or name. (default: main)
+-limit string
+      Limit package path to prefix.
+-group string
+      Grouping functions by [pkg, type] (separate multiple by comma).
+-ignore string
+      Ignore package paths with prefix (separate multiple by comma).
+-minlen uint
+      Minimum edge length (for wider output). (default: 2)
+-nodesep float
+      Minimum space between two adjacent nodes in the same rank (for taller output). (default: 0.35)
 ```
-
-## Legend
-
-### Packages & Types
-
-###### Presented as subgraphs (clusters).
-
-##### Packages
-- *normal corners*
-- *label on the top*
-
-##### Types
-- *rounded corners*
-- *label on the bottom*
-
-Represents  | Style
-----------: | :-------------
-  `focused` | _blue color_
-   `stdlib` | _green color_
-    `other` | _yellow color_
-
-### Functions
-
-###### Presented as nodes.
-
-Represents   | Style
------------: | :--------------
-  `exported` | _bold border_
-`unexported` | _normal border_
- `anonymous` | _dotted border_
-
-### Calls
-
-###### Presented as edges.
-
-Represents   | Style
------------: | :-------------
-  `internal` | _black color_
-  `external` | _brown color_
-    `static` | _solid line_
-   `dynamic` | _dashed line_
-   `regular` | _simple arrow_
-`concurrent` | _arrow with empty circle_
-  `deferred` | _arrow with empty diamond_
 
 ## Examples
 
-Here is an example for the project [syncthing](https://github.com/syncthing/syncthing).
+Here is example for the project [syncthing](https://github.com/syncthing/syncthing).
 
 [![syncthing example](images/syncthing.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/syncthing.png)
 
-```
-go-callvis -focus upgrade -group pkg,type -limit github.com/syncthing/syncthing -ignore github.com/syncthing/syncthing/lib/logger github.com/syncthing/syncthing/cmd/syncthing | dot -Tpng -o syncthing.png
-```
+You can find more examples [here](examples).
 
-###### You can find more examples in the folder [examples](examples).
+## Community
 
-### Community
+Join [#go-callvis](https://gophers.slack.com/archives/go-callvis) channel at [gophers.slack.com](http://gophers.slack.com).
 
-Join the channel [#go-callvis](https://gophers.slack.com/archives/go-callvis) at [gophers.slack.com](http://gophers.slack.com).
+> *Not a member yet?* [Get invitation](https://gophersinvite.herokuapp.com).
 
-> *Are you not a member yet?* [Get invitation](https://gophersinvite.herokuapp.com).
+### How to contribute
 
-#### How to contribute
-
-###### *Did you find any bugs or have some suggestions?*
+###### Did you find any bugs or have some suggestions?
 
 Feel free to open [new issue](https://github.com/TrueFurby/go-callvis/issues/new) or start discussion in the slack channel.
 
-#### Known Issues
+### Known Issues
 
-+ **each execution takes a lot of time, because currently:**
-  - the call graph is always generated for the entire program
-  - there is yet no caching of call graph data
+###### Each execution takes a lot of time, because currently:
+- the call graph is always generated for the entire program
+- there is yet no caching of call graph data
 
 ---
 
 #### Roadmap
 
-###### :boom: The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/TrueFurby/goexplorer).
+##### The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/TrueFurby/goexplorer)! :boom:
 
 > Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
