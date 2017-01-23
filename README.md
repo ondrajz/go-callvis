@@ -92,7 +92,7 @@ Represents   | Style
 
 ### Usage
 
-`go-callvis [OPTIONS] <main pkg>`
+`go-callvis [OPTIONS] <main pkg> | dot -Tpng -o output.png`
 
 ### Options
 
