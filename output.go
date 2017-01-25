@@ -14,6 +14,15 @@ import (
 
 var output io.Writer = os.Stdout
 
+func isSynthetic(edge *callgraph.Edge) bool {
+	return edge.Caller.Func.Pkg == nil || edge.Callee.Func.Synthetic != ""
+}
+
+func inStd(node *callgraph.Node) bool {
+	pkg, _ := build.Import(node.Func.Pkg.Pkg.Path(), "", 0)
+	return pkg.Goroot
+}
+
 func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package, limitPaths, ignorePaths []string, groupBy map[string]bool, nostd bool) error {
 	groupType := groupBy["type"]
 	groupPkg := groupBy["pkg"]
@@ -43,7 +52,37 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 	logf("%d ignore prefixes: %v", len(ignorePaths), ignorePaths)
 	logf("no std packages: %v", nostd)
 
-	var inLimit = func(node *callgraph.Node) bool {
+	var isFocused = func(edge *callgraph.Edge) bool {
+		caller := edge.Caller
+		callee := edge.Callee
+		if caller.Func.Pkg.Pkg.Path() == focusPkg.ImportPath ||
+			callee.Func.Pkg.Pkg.Path() == focusPkg.ImportPath {
+			return true
+		}
+		fromFocused := false
+		toFocused := false
+		for _, e := range caller.In {
+			if !isSynthetic(e) &&
+				e.Caller.Func.Pkg.Pkg.Path() == focusPkg.ImportPath {
+				fromFocused = true
+				break
+			}
+		}
+		for _, e := range callee.Out {
+			if !isSynthetic(e) &&
+				e.Callee.Func.Pkg.Pkg.Path() == focusPkg.ImportPath {
+				toFocused = true
+				break
+			}
+		}
+		if fromFocused && toFocused {
+			logf("edge semi-focus: %s", edge)
+			return true
+		}
+		return false
+	}
+
+	var inLimits = func(node *callgraph.Node) bool {
 		pkgPath := node.Func.Pkg.Pkg.Path()
 		for _, p := range limitPaths {
 			if strings.HasPrefix(pkgPath, p) {
@@ -53,7 +92,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		return false
 	}
 
-	var isIgnored = func(node *callgraph.Node) bool {
+	var inIgnores = func(node *callgraph.Node) bool {
 		pkgPath := node.Func.Pkg.Pkg.Path()
 		for _, p := range ignorePaths {
 			if strings.HasPrefix(pkgPath, p) {
@@ -61,11 +100,6 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 			}
 		}
 		return false
-	}
-
-	var isStd = func(node *callgraph.Node) bool {
-		pkg, _ := build.Import(node.Func.Pkg.Pkg.Path(), "", 0)
-		return pkg.Goroot
 	}
 
 	count := 0
@@ -76,7 +110,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		callee := edge.Callee
 
 		// omit synthetic calls
-		if caller.Func.Pkg == nil || callee.Func.Synthetic != "" {
+		if isSynthetic(edge) {
 			return nil
 		}
 
@@ -85,25 +119,26 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 
 		// focus specific pkg
 		if focusPkg != nil &&
-			(callerPkg.Path() != focusPkg.ImportPath && calleePkg.Path() != focusPkg.ImportPath) {
+			!isFocused(edge) {
 			return nil
 		}
 
 		// limit path prefixes
 		if len(limitPaths) > 0 &&
-			(!inLimit(caller) || !inLimit(callee)) {
+			(!inLimits(caller) || !inLimits(callee)) {
 			logf("NOT in limit: %s -> %s", caller, callee)
 			return nil
 		}
 
 		// ignore path prefixes
 		if len(ignorePaths) > 0 &&
-			(isIgnored(caller) || isIgnored(callee)) {
+			(inIgnores(caller) || inIgnores(callee)) {
 			return nil
 		}
 
 		// omit std
-		if nostd && (isStd(caller) || isStd(callee)) {
+		if nostd &&
+			(inStd(caller) || inStd(callee)) {
 			return nil
 		}
 
