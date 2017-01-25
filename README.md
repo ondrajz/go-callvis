@@ -22,6 +22,7 @@ Purpose of this tool is to provide a visual overview of your program by using th
 - group functions by package and methods by type
 - limit packages to custom path prefixes
 - ignore packages containing path prefixes
+- omit calls from/to std packages
 
 ### Output preview
 
