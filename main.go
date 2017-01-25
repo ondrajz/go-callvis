@@ -24,6 +24,7 @@ var (
 	limitFlag   = flag.String("limit", "", "Limit package paths to prefix. (separate multiple by comma)")
 	groupFlag   = flag.String("group", "", "Grouping functions by [pkg, type] (separate multiple by comma).")
 	ignoreFlag  = flag.String("ignore", "", "Ignore package paths with prefix (separate multiple by comma).")
+	nostdFlag   = flag.Bool("nostd", false, "Omit calls to/from std packages.")
 	testFlag    = flag.Bool("tests", false, "Include test code.")
 	debugFlag   = flag.Bool("debug", false, "Enable verbose log.")
 	versionFlag = flag.Bool("version", false, "Show version and exit.")
@@ -73,13 +74,13 @@ func main() {
 		}
 	}
 
-	if err := run(&build.Default, *focusFlag, groupBy, limitPaths, ignorePaths, *testFlag, flag.Args()); err != nil {
+	if err := run(&build.Default, *focusFlag, groupBy, limitPaths, ignorePaths, *nostdFlag, *testFlag, flag.Args()); err != nil {
 		fmt.Fprintf(os.Stderr, "go-callvis: %s\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctxt *build.Context, focus string, groupBy map[string]bool, limitPaths, ignorePaths []string, tests bool, args []string) error {
+func run(ctxt *build.Context, focus string, groupBy map[string]bool, limitPaths, ignorePaths []string, nostd, tests bool, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("missing arguments")
 	}
@@ -162,7 +163,7 @@ func run(ctxt *build.Context, focus string, groupBy map[string]bool, limitPaths,
 	logf("analysis took: %v", time.Since(t0))
 
 	return printOutput(mains[0].Pkg, result.CallGraph,
-		focusPkg, limitPaths, ignorePaths, groupBy)
+		focusPkg, limitPaths, ignorePaths, groupBy, nostd)
 }
 
 func logf(f string, a ...interface{}) {

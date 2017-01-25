@@ -14,7 +14,7 @@ import (
 
 var output io.Writer = os.Stdout
 
-func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package, limitPaths, ignorePaths []string, groupBy map[string]bool) error {
+func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package, limitPaths, ignorePaths []string, groupBy map[string]bool, nostd bool) error {
 	groupType := groupBy["type"]
 	groupPkg := groupBy["pkg"]
 
@@ -41,31 +41,37 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 
 	logf("%d limit prefixes: %v", len(limitPaths), limitPaths)
 	logf("%d ignore prefixes: %v", len(ignorePaths), ignorePaths)
+	logf("no std packages: %v", nostd)
 
-	var inLimit = func(from, to *callgraph.Node) bool {
-		if len(limitPaths) == 0 {
-			return true
-		}
-		var fromOk, toOk bool
-		fromPath := from.Func.Pkg.Pkg.Path()
-		toPath := to.Func.Pkg.Pkg.Path()
+	var inLimit = func(node *callgraph.Node) bool {
+		pkgPath := node.Func.Pkg.Pkg.Path()
 		for _, p := range limitPaths {
-			if strings.HasPrefix(fromPath, p) {
-				fromOk = true
-			}
-			if strings.HasPrefix(toPath, p) {
-				toOk = true
-			}
-			if fromOk && toOk {
-				logf("in limit: %s -> %s", from, to)
+			if strings.HasPrefix(pkgPath, p) {
 				return true
 			}
 		}
-		logf("NOT in limit: %s -> %s", from, to)
 		return false
 	}
 
+	var isIgnored = func(node *callgraph.Node) bool {
+		pkgPath := node.Func.Pkg.Pkg.Path()
+		for _, p := range ignorePaths {
+			if strings.HasPrefix(pkgPath, p) {
+				return true
+			}
+		}
+		return false
+	}
+
+	var isStd = func(node *callgraph.Node) bool {
+		pkg, _ := build.Import(node.Func.Pkg.Pkg.Path(), "", 0)
+		return pkg.Goroot
+	}
+
+	count := 0
 	err := callgraph.GraphVisitEdges(cg, func(edge *callgraph.Edge) error {
+		count++
+
 		caller := edge.Caller
 		callee := edge.Callee
 
@@ -79,21 +85,26 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 
 		// focus specific pkg
 		if focusPkg != nil &&
-			!(callerPkg.Path() == focusPkg.ImportPath || calleePkg.Path() == focusPkg.ImportPath) {
+			(callerPkg.Path() != focusPkg.ImportPath && calleePkg.Path() != focusPkg.ImportPath) {
 			return nil
 		}
 
 		// limit path prefixes
-		if !inLimit(caller, callee) {
+		if len(limitPaths) > 0 &&
+			(!inLimit(caller) || !inLimit(callee)) {
+			logf("NOT in limit: %s -> %s", caller, callee)
 			return nil
 		}
 
 		// ignore path prefixes
-		for _, p := range ignorePaths {
-			if strings.HasPrefix(callerPkg.Path(), p) ||
-				strings.HasPrefix(calleePkg.Path(), p) {
-				return nil
-			}
+		if len(ignorePaths) > 0 &&
+			(isIgnored(caller) || isIgnored(callee)) {
+			return nil
+		}
+
+		// omit std
+		if nostd && (isStd(caller) || isStd(callee)) {
+			return nil
 		}
 
 		var sprintNode = func(node *callgraph.Node) *dotNode {
@@ -261,7 +272,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		return err
 	}
 
-	logf("%d edges", len(edges))
+	logf("%d/%d edges", len(edges), count)
 
 	dot := &dotGraph{
 		Title:   mainPkg.Path(),

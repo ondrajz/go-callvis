@@ -105,6 +105,8 @@ Represents   | Style
       Grouping functions by [pkg, type]. (separate multiple by comma)
 -ignore string
       Ignore package paths with prefix. (separate multiple by comma)
+-nostd
+      Omit calls from/to std packages.
 -minlen uint
       Minimum edge length (for wider output). (default: 2)
 -nodesep float
@@ -125,11 +127,13 @@ Join [#go-callvis](https://gophers.slack.com/archives/go-callvis) channel at [go
 
 > *Not a member yet?* [Get invitation](https://gophersinvite.herokuapp.com).
 
-### How to contribute
+### How to help
 
 ###### Did you find any bugs or have some suggestions?
-
 Feel free to open [new issue](https://github.com/TrueFurby/go-callvis/issues/new) or start discussion in the slack channel.
+
+###### Do you want to contribute to the development?
+Fork the project and do a pull request. [Here](https://github.com/TrueFurby/go-callvis/projects/1) you can find the state of features.
 
 ### Known Issues
 
