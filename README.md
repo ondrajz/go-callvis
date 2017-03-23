@@ -52,9 +52,9 @@ Here you can find descriptions for all possible kinds of calls and groups.
 
 Represents  | Style
 ----------: | :-------------
-  `focused` | _**blue** color_
-   `stdlib` | _**green** color_
-    `other` | _**yellow** color_
+`focused`   | _**blue** color_
+`stdlib`    | _**green** color_
+`other`     | _**yellow** color_
 
 ### Functions / Methods
 
@@ -62,9 +62,9 @@ Represents  | Style
 
 Represents   | Style
 -----------: | :--------------
-  `exported` | _**bold** border_
+`exported`   | _**bold** border_
 `unexported` | _**normal** border_
- `anonymous` | _**dotted** border_
+`anonymous`  | _**dotted** border_
 
 ### Calls
 
@@ -72,13 +72,13 @@ Represents   | Style
 
 Represents   | Style
 -----------: | :-------------
-  `internal` | _**black** color_
-  `external` | _**brown** color_
-    `static` | _**solid** line_
-   `dynamic` | _**dashed** line_
-   `regular` | _**simple** arrow_
+`internal`   | _**black** color_
+`external`   | _**brown** color_
+`static`     | _**solid** line_
+`dynamic`    | _**dashed** line_
+`regular`    | _**simple** arrow_
 `concurrent` | _arrow with **circle**_
-  `deferred` | _arrow with **diamond**_
+`deferred`   | _arrow with **diamond**_
 
 ## Quick start
 
