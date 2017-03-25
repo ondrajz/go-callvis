@@ -1,6 +1,6 @@
 <p align="center"><img src="images/gopher.png" alt="gopher"></p>
-
-# <div align="center">go-callvis</div>
+  
+<h1 align="center">go-callvis</h1>
 
 <p align="center">
   <a href="https://github.com/TrueFurby/go-callvis/releases"><img src="https://img.shields.io/github/release/truefurby/go-callvis.svg" alt="Github release"></a>
