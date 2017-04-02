@@ -6,7 +6,7 @@ LDFLAGS := -X main.Version=$(VERSION)
 
 default: install
 
-install: dep
+install: get-deps dep
 	go clean -i
 	go install -ldflags "$(LDFLAGS)"
 
