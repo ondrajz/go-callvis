@@ -6,6 +6,6 @@ go:
   - 1.7
   - 1.6
 
-install: make get-deps
+install: make install
 
 script: make test
