@@ -89,7 +89,10 @@ Represents   | Style
 
 ### Installation
 
-`go get -u github.com/TrueFurby/go-callvis`
+```sh
+go get -u github.com/TrueFurby/go-callvis
+cd $GOPATH/src/github.com/TrueFurby/go-callvis && make
+```
 
 ### Usage
 

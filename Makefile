@@ -6,7 +6,7 @@ LDFLAGS := -X main.Version=$(VERSION)
 
 default: install
 
-install:
+install: dep
 	go clean -i
 	go install -ldflags "$(LDFLAGS)"
 
@@ -18,7 +18,10 @@ release:
 	go build -v -ldflags "$(LDFLAGS)" -o build/go-callvis_$(VERSION)-$(GOARCH)
 
 test:
-	go test -v ./...
+	go test -v
+
+dep:
+	dep ensure -update
 
 get-deps:
-	go get -t -v ./...
+	go get github.com/golang/dep/cmd/dep

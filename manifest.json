@@ -1,0 +1,7 @@
+{
+    "dependencies": {
+        "golang.org/x/tools": {
+            "branch": "master"
+        }
+    }
+}
