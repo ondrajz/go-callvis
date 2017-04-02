@@ -1,5 +1,5 @@
 <p align="center"><img src="images/gopher.png" alt="gopher"></p>
-  
+
 <h1 align="center">go-callvis</h1>
 
 <p align="center">
@@ -84,7 +84,7 @@ Represents   | Style
 
 #### Requirements
 
-- [Go](https://golang.org/dl/)
+- [Go](https://golang.org/dl/) 1.7+
 - [Graphviz](http://www.graphviz.org/Download..php)
 
 ### Installation
