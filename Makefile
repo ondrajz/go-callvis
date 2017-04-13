@@ -10,7 +10,7 @@ dep:
 	dep ensure -update
 
 get-deps:
-	go get github.com/golang/dep/cmd/dep
+	go get -u github.com/golang/dep/cmd/dep
 
 install: get-deps dep
 	go clean -i
