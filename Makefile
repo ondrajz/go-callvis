@@ -7,13 +7,15 @@ LDFLAGS := -X main.Version=$(VERSION)
 default: install
 
 dep:
-	dep ensure -update
+	dep ensure
 
 get-deps:
 	go get -u github.com/golang/dep/cmd/dep
 
-install: get-deps dep
+clean:
 	go clean -i
+
+install: get-deps dep clean
 	go install -ldflags "$(LDFLAGS)"
 
 build:
