@@ -1,4 +1,0 @@
-
-[[dependencies]]
-  branch = "master"
-  name = "golang.org/x/tools"

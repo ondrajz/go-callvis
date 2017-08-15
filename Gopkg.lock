@@ -1,7 +1,0 @@
-memo = "6e8afa27b7cc61d6f1ea5430f44708184904b946bb66331c5c43e82ac3b8494f"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/tools"
-  packages = ["container/intsets","go/ast/astutil","go/buildutil","go/callgraph","go/loader","go/pointer","go/ssa","go/ssa/ssautil","go/types/typeutil"]
-  revision = "cbb995d093b2c4a12ac074e53d90373ecc827527"

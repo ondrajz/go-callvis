@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./mypkg"
+	"github.com/TrueFurby/go-callvis/examples/main/mypkg"
 )
 
 func main() {
