@@ -7,7 +7,7 @@ LDFLAGS := -X main.Version=$(VERSION)
 default: install
 
 dep:
-	dep ensure
+	$(GOPATH)/bin/dep ensure
 
 get-deps:
 	go get -u github.com/golang/dep/cmd/dep
