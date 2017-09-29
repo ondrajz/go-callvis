@@ -3,7 +3,6 @@ language: go
 go:
   - tip
   - 1.8
-  - 1.7
 
 install: make install
 
