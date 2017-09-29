@@ -84,7 +84,7 @@ Represents   | Style
 
 #### Requirements
 
-- [Go](https://golang.org/dl/) 1.7+
+- [Go](https://golang.org/dl/) 1.8+
 - [Graphviz](http://www.graphviz.org/Download..php)
 
 ### Installation
