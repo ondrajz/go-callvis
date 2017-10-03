@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/build"
 	"go/types"
@@ -23,7 +24,7 @@ func inStd(node *callgraph.Node) bool {
 	return pkg.Goroot
 }
 
-func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package, limitPaths, ignorePaths []string, groupBy map[string]bool, nostd bool) error {
+func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package, limitPaths, ignorePaths []string, groupBy map[string]bool, nostd bool) (string, error) {
 	groupType := groupBy["type"]
 	groupPkg := groupBy["pkg"]
 
@@ -304,7 +305,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		return nil
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	logf("%d/%d edges", len(edges), count)
@@ -321,5 +322,10 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		},
 	}
 
-	return WriteDot(output, dot)
+	var buf bytes.Buffer
+	if err := WriteDot(&buf, dot); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"go/build"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -45,55 +46,27 @@ func main() {
 		log.SetFlags(log.Lmicroseconds)
 	}
 
-	groupBy := make(map[string]bool)
-	for _, g := range strings.Split(*groupFlag, ",") {
-		g := strings.TrimSpace(g)
-		if g == "" {
-			continue
-		}
-		if g != "pkg" && g != "type" {
-			fmt.Fprintf(os.Stderr, "go-callvis: %s\n", "invalid group option")
-			os.Exit(1)
-		}
-		groupBy[g] = true
-	}
-
-	limitPaths := []string{}
-	for _, p := range strings.Split(*limitFlag, ",") {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			limitPaths = append(limitPaths, p)
-		}
-	}
-
-	ignorePaths := []string{}
-	for _, p := range strings.Split(*ignoreFlag, ",") {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			ignorePaths = append(ignorePaths, p)
-		}
-	}
-
-	if err := run(&build.Default, *focusFlag, groupBy, limitPaths, ignorePaths, *nostdFlag, *testFlag, flag.Args()); err != nil {
+	args := flag.Args()
+	tests := *testFlag
+	focus := *focusFlag
+	nostd := *nostdFlag
+	/*if mains, err := getMains(conf focusFlag, groupBy, limitPaths, ignorePaths, *nostdFlag, *testFlag,, flag.Args()); err != nil {
 		fmt.Fprintf(os.Stderr, "go-callvis: %s\n", err)
 		os.Exit(1)
-	}
-}
-
-func run(ctxt *build.Context, focus string, groupBy map[string]bool, limitPaths, ignorePaths []string, nostd, tests bool, args []string) error {
+	}*/
 	if len(args) == 0 {
-		return fmt.Errorf("missing arguments")
+		log.Fatalln("missing arguments")
 	}
 
 	t0 := time.Now()
-	conf := loader.Config{Build: ctxt}
+	conf := loader.Config{Build: &build.Default}
 	_, err := conf.FromArgs(args, tests)
 	if err != nil {
-		return err
+		log.Fatalln("invalid args:", err)
 	}
 	load, err := conf.Load()
 	if err != nil {
-		return err
+		log.Fatalln("failed conf load:", err)
 	}
 	logf("loading took: %v", time.Since(t0))
 	logf("%d imported (%d created)", len(load.Imported), len(load.Created))
@@ -104,35 +77,6 @@ func run(ctxt *build.Context, focus string, groupBy map[string]bool, limitPaths,
 	pkgs := prog.AllPackages()
 	logf("building took: %v", time.Since(t0))
 
-	var focusPkg *build.Package
-	if focus != "" {
-		focusPkg, err = conf.Build.Import(focus, "", 0)
-		if err != nil {
-			if strings.Contains(focus, "/") {
-				return err
-			}
-			// try to find package by name
-			var foundPaths []string
-			for _, p := range pkgs {
-				if p.Pkg.Name() == focus {
-					foundPaths = append(foundPaths, p.Pkg.Path())
-				}
-			}
-			if len(foundPaths) == 0 {
-				return err
-			} else if len(foundPaths) > 1 {
-				for _, p := range foundPaths {
-					fmt.Fprintf(os.Stderr, " - %s\n", p)
-				}
-				return fmt.Errorf("found %d packages with name %q, use import path not name", len(foundPaths), focus)
-			}
-			if focusPkg, err = conf.Build.Import(foundPaths[0], "", 0); err != nil {
-				return err
-			}
-		}
-		logf("focusing: %v", focusPkg.ImportPath)
-	}
-
 	var mains []*ssa.Package
 	if tests {
 		for _, pkg := range pkgs {
@@ -141,12 +85,12 @@ func run(ctxt *build.Context, focus string, groupBy map[string]bool, limitPaths,
 			}
 		}
 		if mains == nil {
-			return fmt.Errorf("no tests")
+			log.Fatalln("no tests")
 		}
 	} else {
 		mains = append(mains, ssautil.MainPackages(pkgs)...)
 		if len(mains) == 0 {
-			return fmt.Errorf("no main packages")
+			log.Fatalln("no main packages")
 		}
 	}
 	logf("%d packages (%d main)", len(pkgs), len(mains))
@@ -158,13 +102,103 @@ func run(ctxt *build.Context, focus string, groupBy map[string]bool, limitPaths,
 	}
 	result, err := pointer.Analyze(ptrcfg)
 	if err != nil {
-		return err
+		log.Fatalln("analyze failed:", err)
 	}
 	logf("analysis took: %v", time.Since(t0))
 
-	return printOutput(mains[0].Pkg, result.CallGraph,
-		focusPkg, limitPaths, ignorePaths, groupBy, nostd)
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		if f := r.FormValue("f"); f != "" {
+			focus = f
+		}
+
+		groupBy := make(map[string]bool)
+		for _, g := range strings.Split(*groupFlag, ",") {
+			g := strings.TrimSpace(g)
+			if g == "" {
+				continue
+			}
+			if g != "pkg" && g != "type" {
+				fmt.Fprintf(os.Stderr, "go-callvis: %s\n", "invalid group option")
+				os.Exit(1)
+			}
+			groupBy[g] = true
+		}
+
+		limitPaths := []string{}
+		for _, p := range strings.Split(*limitFlag, ",") {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				limitPaths = append(limitPaths, p)
+			}
+		}
+
+		ignorePaths := []string{}
+		for _, p := range strings.Split(*ignoreFlag, ",") {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				ignorePaths = append(ignorePaths, p)
+			}
+		}
+
+		var focusPkg *build.Package
+		if focus != "" {
+			focusPkg, err = conf.Build.Import(focus, "", 0)
+			if err != nil {
+				if strings.Contains(focus, "/") {
+					log.Fatalln("failed:", err)
+				}
+				// try to find package by name
+				var foundPaths []string
+				for _, p := range pkgs {
+					if p.Pkg.Name() == focus {
+						foundPaths = append(foundPaths, p.Pkg.Path())
+					}
+				}
+				if len(foundPaths) == 0 {
+					log.Fatalln("failed:", err)
+				} else if len(foundPaths) > 1 {
+					for _, p := range foundPaths {
+						fmt.Fprintf(os.Stderr, " - %s\n", p)
+					}
+					log.Fatalf("found %d packages with name %q, use import path not name", len(foundPaths), focus)
+				}
+				if focusPkg, err = conf.Build.Import(foundPaths[0], "", 0); err != nil {
+					log.Fatalln("failed:", err)
+				}
+			}
+			logf("focusing: %v", focusPkg.ImportPath)
+		}
+
+		out, err := printOutput(mains[0].Pkg, result.CallGraph,
+			focusPkg, limitPaths, ignorePaths, groupBy, nostd)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprintln(w, out)
+	}
+
+	//handler()
+	/*	fmt.Println("\n\n//-----")
+		nostd = false
+		handler()*/
+
+	http.HandleFunc("/", handler)
+
+	log.Println("serving..")
+
+	log.Fatal(http.ListenAndServe(":7878", nil))
 }
+
+/*
+func getMains( ctxt *build.Context, focus string, groupBy map[string]bool, limitPaths, ignorePaths []string, nostd, tests bool, args []string) ([]*ssa.Package, error) {
+
+
+    return mains, result, nil
+}*/
+/*
+func serve(mainPkg *types.Package, ) {
+}*/
 
 func logf(f string, a ...interface{}) {
 	if *debugFlag {
