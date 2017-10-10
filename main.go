@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -107,7 +108,13 @@ func main() {
 	logf("analysis took: %v", time.Since(t0))
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		if f := r.FormValue("f"); f != "" {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+
+		f := r.FormValue("f")
+		if f != "" {
 			focus = f
 		}
 
@@ -118,8 +125,10 @@ func main() {
 				continue
 			}
 			if g != "pkg" && g != "type" {
-				fmt.Fprintf(os.Stderr, "go-callvis: %s\n", "invalid group option")
-				os.Exit(1)
+				//fmt.Fprintf(os.Stderr, "go-callvis: %s\n", "invalid group option")
+				//os.Exit(1)
+				http.Error(w, "invalid group option", http.StatusInternalServerError)
+				return
 			}
 			groupBy[g] = true
 		}
@@ -145,7 +154,8 @@ func main() {
 			focusPkg, err = conf.Build.Import(focus, "", 0)
 			if err != nil {
 				if strings.Contains(focus, "/") {
-					log.Fatalln("failed:", err)
+					http.Error(w, "focus failed", http.StatusInternalServerError)
+					return
 				}
 				// try to find package by name
 				var foundPaths []string
@@ -155,27 +165,41 @@ func main() {
 					}
 				}
 				if len(foundPaths) == 0 {
-					log.Fatalln("failed:", err)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
 				} else if len(foundPaths) > 1 {
 					for _, p := range foundPaths {
 						fmt.Fprintf(os.Stderr, " - %s\n", p)
 					}
-					log.Fatalf("found %d packages with name %q, use import path not name", len(foundPaths), focus)
+					err := fmt.Errorf("found %d packages with name %q, use import path not name", len(foundPaths), focus)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
 				}
 				if focusPkg, err = conf.Build.Import(foundPaths[0], "", 0); err != nil {
-					log.Fatalln("failed:", err)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
 				}
 			}
 			logf("focusing: %v", focusPkg.ImportPath)
 		}
 
-		out, err := printOutput(mains[0].Pkg, result.CallGraph,
+		dot, err := printOutput(mains[0].Pkg, result.CallGraph,
 			focusPkg, limitPaths, ignorePaths, groupBy, nostd)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Fprintln(w, out)
+
+		log.Println("dot to image..")
+		//fmt.Fprintln(w, dot)
+		img, err := dotToImage(dot)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		log.Println("serving file:", img)
+		http.ServeFile(w, r, img)
 	}
 
 	//handler()
@@ -188,6 +212,39 @@ func main() {
 	log.Println("serving..")
 
 	log.Fatal(http.ListenAndServe(":7878", nil))
+}
+
+func dotToImage(dot string) (string, error) {
+	img := "/tmp/test000.svg"
+	cmd := exec.Command("/usr/bin/dot", "-Tsvg", "-o", img)
+	cmd.Stdin = strings.NewReader(dot)
+	/*cmd.Stderr = os.Stderr
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return "", err
+	}*/
+	/*stdout, err := cmd.StdoutPipe()
+	if nil != err {
+		return "", err
+	}
+	reader := bufio.NewReader(stdout)
+	go func(reader io.Reader) {
+		scanner := bufio.NewScanner(reader)
+		for scanner.Scan() {
+			log.Printf("Reading from subprocess: %s", scanner.Text())
+			stdin.Write([]byte(dot))
+		}
+	}(reader)*/
+	/*go func() {
+		_, err := stdin.Write([]byte(dot))
+		if err != nil {
+			log.Println("stdin.Write error", err)
+		}
+	}()*/
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+	return img, nil
 }
 
 /*
