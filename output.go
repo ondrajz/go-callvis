@@ -214,6 +214,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 							"label":     label,
 							"style":     "filled",
 							"fillcolor": "lightyellow",
+							"URL":       fmt.Sprintf("/?f=%s", key),
 						},
 					}
 					if pkg.Goroot {
