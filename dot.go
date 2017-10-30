@@ -13,6 +13,11 @@ var (
 	nodesep float64
 )
 
+var (
+	FontTitle = "Consolas"
+	FontNode  = "Tahoma"
+)
+
 const tmplCluster = `{{define "cluster" -}}
     {{printf "subgraph %q {" .}}
         {{printf "%s" .Attrs.Lines}}
@@ -36,8 +41,8 @@ const tmplEdge = `{{define "node" -}}
 const tmplGraph = `digraph gocallvis {
     label="{{.Title}}";
     labeljust="l";
-    fontname="Ubuntu";
-    fontsize="13";
+    fontname="Arial";
+    fontsize="14";
     rankdir="LR";
     bgcolor="lightgray";
     style="solid";
@@ -45,7 +50,7 @@ const tmplGraph = `digraph gocallvis {
     pad="0.0";
     nodesep="{{.Options.nodesep}}";
 
-    node [shape="ellipse" style="filled" fillcolor="honeydew" fontname="Ubuntu" penwidth="1.0" margin="0.05,0.0"];
+    node [shape="ellipse" style="filled" fillcolor="honeydew" fontname="Tahoma" penwidth="1.0" margin="0.05,0.0"];
     edge [minlen="{{.Options.minlen}}"]
 
     {{template "cluster" .Cluster}}
