@@ -50,7 +50,7 @@ const tmplGraph = `digraph gocallvis {
     pad="0.0";
     nodesep="{{.Options.nodesep}}";
 
-    node [shape="ellipse" style="filled" fillcolor="honeydew" fontname="Tahoma" penwidth="1.0" margin="0.05,0.0"];
+    node [shape="ellipse" style="filled" fillcolor="honeydew" fontname="Verdana" penwidth="1.0" margin="0.05,0.0"];
     edge [minlen="{{.Options.minlen}}"]
 
     {{template "cluster" .Cluster}}

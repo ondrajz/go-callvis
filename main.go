@@ -8,6 +8,7 @@ import (
 	"go/build"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -23,13 +24,15 @@ var Version = "0.0.0-src"
 
 var (
 	focusFlag   = flag.String("focus", "main", "Focus package with name or import path.")
-	limitFlag   = flag.String("limit", "", "Limit package paths to prefix. (separate multiple by comma)")
 	groupFlag   = flag.String("group", "", "Grouping functions by [pkg, type] (separate multiple by comma).")
+	limitFlag   = flag.String("limit", "", "Limit package paths to prefix. (separate multiple by comma)")
 	ignoreFlag  = flag.String("ignore", "", "Ignore package paths with prefix (separate multiple by comma).")
+	includeFlag = flag.String("include", "", "Include package paths with prefix (separate multiple by comma).")
 	nostdFlag   = flag.Bool("nostd", false, "Omit calls to/from std packages.")
 	testFlag    = flag.Bool("tests", false, "Include test code.")
 	debugFlag   = flag.Bool("debug", false, "Enable verbose log.")
 	versionFlag = flag.Bool("version", false, "Show version and exit.")
+	httpFlag    = flag.String("http", ":7878", "Web server")
 )
 
 func main() {
@@ -149,6 +152,14 @@ func main() {
 			}
 		}
 
+		includePaths := []string{}
+		for _, p := range strings.Split(*includeFlag, ",") {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				includePaths = append(includePaths, p)
+			}
+		}
+
 		var focusPkg *build.Package
 		if focus != "" {
 			focusPkg, err = conf.Build.Import(focus, "", 0)
@@ -184,7 +195,7 @@ func main() {
 		}
 
 		dot, err := printOutput(mains[0].Pkg, result.CallGraph,
-			focusPkg, limitPaths, ignorePaths, groupBy, nostd)
+			focusPkg, limitPaths, ignorePaths, includePaths, groupBy, nostd)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -209,9 +220,13 @@ func main() {
 
 	http.HandleFunc("/", handler)
 
-	log.Println("serving..")
+	web := &url.URL{
+		Scheme: "http",
+		Host:   "localhost" + *httpFlag,
+	}
+	log.Printf("serving at %s", web)
 
-	log.Fatal(http.ListenAndServe(":7878", nil))
+	log.Fatal(http.ListenAndServe(*httpFlag, nil))
 }
 
 func dotToImage(dot string) (string, error) {

@@ -24,7 +24,8 @@ func inStd(node *callgraph.Node) bool {
 	return pkg.Goroot
 }
 
-func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package, limitPaths, ignorePaths []string, groupBy map[string]bool, nostd bool) (string, error) {
+func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package,
+	limitPaths, ignorePaths, includePaths []string, groupBy map[string]bool, nostd bool) (string, error) {
 	groupType := groupBy["type"]
 	groupPkg := groupBy["pkg"]
 
@@ -83,6 +84,16 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		return false
 	}
 
+	var inIncludes = func(node *callgraph.Node) bool {
+		pkgPath := node.Func.Pkg.Pkg.Path()
+		for _, p := range includePaths {
+			if strings.HasPrefix(pkgPath, p) {
+				return true
+			}
+		}
+		return false
+	}
+
 	var inLimits = func(node *callgraph.Node) bool {
 		pkgPath := node.Func.Pkg.Pkg.Path()
 		for _, p := range limitPaths {
@@ -121,6 +132,13 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		// focus specific pkg
 		if focusPkg != nil &&
 			!isFocused(edge) {
+			return nil
+		}
+
+		// include path prefixes
+		if len(includePaths) > 0 &&
+			(inIncludes(caller) || inIncludes(callee)) {
+			logf("NOT in include: %s -> %s", caller, callee)
 			return nil
 		}
 
