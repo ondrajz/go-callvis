@@ -29,6 +29,7 @@ var (
 	ignoreFlag  = flag.String("ignore", "", "Ignore package paths with prefix (separate multiple by comma).")
 	includeFlag = flag.String("include", "", "Include package paths with prefix (separate multiple by comma).")
 	nostdFlag   = flag.Bool("nostd", false, "Omit calls to/from std packages.")
+	nointerFlag = flag.Bool("nointer", false, "Omit calls to unexported funcs.")
 	testFlag    = flag.Bool("tests", false, "Include test code.")
 	debugFlag   = flag.Bool("debug", false, "Enable verbose log.")
 	versionFlag = flag.Bool("version", false, "Show version and exit.")
@@ -52,8 +53,6 @@ func main() {
 
 	args := flag.Args()
 	tests := *testFlag
-	focus := *focusFlag
-	nostd := *nostdFlag
 	/*if mains, err := getMains(conf focusFlag, groupBy, limitPaths, ignorePaths, *nostdFlag, *testFlag,, flag.Args()); err != nil {
 		fmt.Fprintf(os.Stderr, "go-callvis: %s\n", err)
 		os.Exit(1)
@@ -110,115 +109,19 @@ func main() {
 	}
 	logf("analysis took: %v", time.Since(t0))
 
-	handler := func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
-			return
-		}
-
-		f := r.FormValue("f")
-		if f != "" {
-			focus = f
-		}
-
-		groupBy := make(map[string]bool)
-		for _, g := range strings.Split(*groupFlag, ",") {
-			g := strings.TrimSpace(g)
-			if g == "" {
-				continue
-			}
-			if g != "pkg" && g != "type" {
-				//fmt.Fprintf(os.Stderr, "go-callvis: %s\n", "invalid group option")
-				//os.Exit(1)
-				http.Error(w, "invalid group option", http.StatusInternalServerError)
-				return
-			}
-			groupBy[g] = true
-		}
-
-		limitPaths := []string{}
-		for _, p := range strings.Split(*limitFlag, ",") {
-			p = strings.TrimSpace(p)
-			if p != "" {
-				limitPaths = append(limitPaths, p)
-			}
-		}
-
-		ignorePaths := []string{}
-		for _, p := range strings.Split(*ignoreFlag, ",") {
-			p = strings.TrimSpace(p)
-			if p != "" {
-				ignorePaths = append(ignorePaths, p)
-			}
-		}
-
-		includePaths := []string{}
-		for _, p := range strings.Split(*includeFlag, ",") {
-			p = strings.TrimSpace(p)
-			if p != "" {
-				includePaths = append(includePaths, p)
-			}
-		}
-
-		var focusPkg *build.Package
-		if focus != "" {
-			focusPkg, err = conf.Build.Import(focus, "", 0)
-			if err != nil {
-				if strings.Contains(focus, "/") {
-					http.Error(w, "focus failed", http.StatusInternalServerError)
-					return
-				}
-				// try to find package by name
-				var foundPaths []string
-				for _, p := range pkgs {
-					if p.Pkg.Name() == focus {
-						foundPaths = append(foundPaths, p.Pkg.Path())
-					}
-				}
-				if len(foundPaths) == 0 {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				} else if len(foundPaths) > 1 {
-					for _, p := range foundPaths {
-						fmt.Fprintf(os.Stderr, " - %s\n", p)
-					}
-					err := fmt.Errorf("found %d packages with name %q, use import path not name", len(foundPaths), focus)
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				if focusPkg, err = conf.Build.Import(foundPaths[0], "", 0); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-			}
-			logf("focusing: %v", focusPkg.ImportPath)
-		}
-
-		dot, err := printOutput(mains[0].Pkg, result.CallGraph,
-			focusPkg, limitPaths, ignorePaths, includePaths, groupBy, nostd)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		log.Println("dot to image..")
-		//fmt.Fprintln(w, dot)
-		img, err := dotToImage(dot)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		log.Println("serving file:", img)
-		http.ServeFile(w, r, img)
-	}
-
 	//handler()
 	/*	fmt.Println("\n\n//-----")
 		nostd = false
 		handler()*/
 
-	http.HandleFunc("/", handler)
+	a := analysis{
+		conf:   conf,
+		pkgs:   pkgs,
+		mains:  mains,
+		result: result,
+	}
+
+	http.HandleFunc("/", a.handler)
 
 	web := &url.URL{
 		Scheme: "http",
@@ -227,6 +130,156 @@ func main() {
 	log.Printf("serving at %s", web)
 
 	log.Fatal(http.ListenAndServe(*httpFlag, nil))
+}
+
+type analysis struct {
+	conf   loader.Config
+	pkgs   []*ssa.Package
+	mains  []*ssa.Package
+	result *pointer.Result
+}
+
+func (a *analysis) handler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" && !strings.HasSuffix(r.URL.Path, ".svg") {
+		http.NotFound(w, r)
+		return
+	}
+
+	focus := *focusFlag
+	nostd := *nostdFlag
+	nointer := *nointerFlag
+	group := *groupFlag
+	limit := *limitFlag
+	ignore := *ignoreFlag
+	include := *includeFlag
+
+	f := r.FormValue("f")
+	if f == "all" {
+		focus = ""
+	} else if f != "" {
+		focus = f
+	}
+	std := r.FormValue("std")
+	if std != "" {
+		nostd = false
+	}
+	inter := r.FormValue("nointer")
+	if inter != "" {
+		nointer = true
+	}
+	g := r.FormValue("group")
+	if g != "" {
+		group = g
+	}
+	l := r.FormValue("limit")
+	if l != "" {
+		limit = l
+	}
+	ign := r.FormValue("ignore")
+	if ign != "" {
+		ignore = ign
+	}
+	inc := r.FormValue("include")
+	if inc != "" {
+		include = inc
+	}
+
+	groupBy := make(map[string]bool)
+	for _, g := range strings.Split(group, ",") {
+		g := strings.TrimSpace(g)
+		if g == "" {
+			continue
+		}
+		if g != "pkg" && g != "type" {
+			//fmt.Fprintf(os.Stderr, "go-callvis: %s\n", "invalid group option")
+			//os.Exit(1)
+			http.Error(w, "invalid group option", http.StatusInternalServerError)
+			return
+		}
+		groupBy[g] = true
+	}
+
+	limitPaths := []string{}
+	for _, p := range strings.Split(limit, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			limitPaths = append(limitPaths, p)
+		}
+	}
+
+	ignorePaths := []string{}
+	for _, p := range strings.Split(ignore, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			ignorePaths = append(ignorePaths, p)
+		}
+	}
+
+	includePaths := []string{}
+	for _, p := range strings.Split(include, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			includePaths = append(includePaths, p)
+		}
+	}
+
+	var err error
+	var focusPkg *build.Package
+	if focus != "" {
+		focusPkg, err = a.conf.Build.Import(focus, "", 0)
+		if err != nil {
+			if strings.Contains(focus, "/") {
+				http.Error(w, "focus failed", http.StatusInternalServerError)
+				return
+			}
+			// try to find package by name
+			var foundPaths []string
+			for _, p := range a.pkgs {
+				if p.Pkg.Name() == focus {
+					foundPaths = append(foundPaths, p.Pkg.Path())
+				}
+			}
+			if len(foundPaths) == 0 {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			} else if len(foundPaths) > 1 {
+				for _, p := range foundPaths {
+					fmt.Fprintf(os.Stderr, " - %s\n", p)
+				}
+				err := fmt.Errorf("found %d packages with name %q, use import path not name", len(foundPaths), focus)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			if focusPkg, err = a.conf.Build.Import(foundPaths[0], "", 0); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		logf("focusing: %v", focusPkg.ImportPath)
+	}
+
+	dot, err := printOutput(a.mains[0].Pkg, a.result.CallGraph,
+		focusPkg, limitPaths, ignorePaths, includePaths, groupBy, nostd, nointer)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if r.Form.Get("format") == "dot" {
+		fmt.Fprint(w, dot)
+		return
+	}
+
+	log.Println("dot to image..")
+	//fmt.Fprintln(w, dot)
+	img, err := dotToImage(dot)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("serving file:", img)
+	http.ServeFile(w, r, img)
 }
 
 func dotToImage(dot string) (string, error) {

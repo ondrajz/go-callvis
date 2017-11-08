@@ -25,7 +25,7 @@ func inStd(node *callgraph.Node) bool {
 }
 
 func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package,
-	limitPaths, ignorePaths, includePaths []string, groupBy map[string]bool, nostd bool) (string, error) {
+	limitPaths, ignorePaths, includePaths []string, groupBy map[string]bool, nostd, nointer bool) (string, error) {
 	groupType := groupBy["type"]
 	groupPkg := groupBy["pkg"]
 
@@ -52,6 +52,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 
 	logf("%d limit prefixes: %v", len(limitPaths), limitPaths)
 	logf("%d ignore prefixes: %v", len(ignorePaths), ignorePaths)
+	logf("%d include prefixes: %v", len(includePaths), includePaths)
 	logf("no std packages: %v", nostd)
 
 	var isFocused = func(edge *callgraph.Edge) bool {
@@ -114,6 +115,15 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		return false
 	}
 
+	var isInter = func(edge *callgraph.Edge) bool {
+		//caller := edge.Caller
+		callee := edge.Callee
+		if callee.Func.Object() != nil && !callee.Func.Object().Exported() {
+			return true
+		}
+		return false
+	}
+
 	count := 0
 	err := callgraph.GraphVisitEdges(cg, func(edge *callgraph.Edge) error {
 		count++
@@ -135,31 +145,45 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 			return nil
 		}
 
-		// include path prefixes
-		if len(includePaths) > 0 &&
-			(inIncludes(caller) || inIncludes(callee)) {
-			logf("NOT in include: %s -> %s", caller, callee)
-			return nil
-		}
-
-		// limit path prefixes
-		if len(limitPaths) > 0 &&
-			(!inLimits(caller) || !inLimits(callee)) {
-			logf("NOT in limit: %s -> %s", caller, callee)
-			return nil
-		}
-
-		// ignore path prefixes
-		if len(ignorePaths) > 0 &&
-			(inIgnores(caller) || inIgnores(callee)) {
-			return nil
-		}
-
 		// omit std
 		if nostd &&
 			(inStd(caller) || inStd(callee)) {
 			return nil
 		}
+
+		// omit inter
+		if nointer && isInter(edge) {
+			return nil
+		}
+
+		include := false
+		// include path prefixes
+		if len(includePaths) > 0 &&
+			(inIncludes(caller) || inIncludes(callee)) {
+			logf("include: %s -> %s", caller, callee)
+			include = true
+		}
+
+		if !include {
+			// limit path prefixes
+			if len(limitPaths) > 0 &&
+				(!inLimits(caller) || !inLimits(callee)) {
+				logf("NOT in limit: %s -> %s", caller, callee)
+				return nil
+			}
+
+			// ignore path prefixes
+			if len(ignorePaths) > 0 &&
+				(inIgnores(caller) || inIgnores(callee)) {
+				logf("IS ignored: %s -> %s", caller, callee)
+				return nil
+			}
+		}
+
+		//var buf bytes.Buffer
+		//data, _ := json.MarshalIndent(caller.Func, "", " ")
+		//logf("call node: %s -> %s\n %v", caller, callee, string(data))
+		logf("call node: %s -> %s", caller, callee)
 
 		var sprintNode = func(node *callgraph.Node) *dotNode {
 			// only once
