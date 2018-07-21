@@ -3,13 +3,31 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:d293bbd22e1d2c0a4d86bedadb88471d774b7b0cf03368e6cffc6859153be9f1"
   name = "golang.org/x/tools"
-  packages = ["container/intsets","go/ast/astutil","go/buildutil","go/callgraph","go/loader","go/pointer","go/ssa","go/ssa/ssautil","go/types/typeutil"]
-  revision = "84a35ef54dff3c5596983e180ec10919fc432242"
+  packages = [
+    "container/intsets",
+    "go/ast/astutil",
+    "go/buildutil",
+    "go/callgraph",
+    "go/loader",
+    "go/pointer",
+    "go/ssa",
+    "go/ssa/ssautil",
+    "go/types/typeutil",
+  ]
+  pruneopts = "UT"
+  revision = "c1def519f03ddf76f16b3e444ee1095d73afa01b"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6e8afa27b7cc61d6f1ea5430f44708184904b946bb66331c5c43e82ac3b8494f"
+  input-imports = [
+    "golang.org/x/tools/go/callgraph",
+    "golang.org/x/tools/go/loader",
+    "golang.org/x/tools/go/pointer",
+    "golang.org/x/tools/go/ssa",
+    "golang.org/x/tools/go/ssa/ssautil",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

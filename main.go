@@ -20,20 +20,22 @@ import (
 	"golang.org/x/tools/go/ssa/ssautil"
 )
 
-var Version = "0.0.0-src"
+var (
+	Version = "v0.4-dev"
+)
 
 var (
-	focusFlag   = flag.String("focus", "main", "Focus package with name or import path.")
-	groupFlag   = flag.String("group", "", "Grouping functions by [pkg, type] (separate multiple by comma).")
-	limitFlag   = flag.String("limit", "", "Limit package paths to prefix. (separate multiple by comma)")
-	ignoreFlag  = flag.String("ignore", "", "Ignore package paths with prefix (separate multiple by comma).")
-	includeFlag = flag.String("include", "", "Include package paths with prefix (separate multiple by comma).")
-	nostdFlag   = flag.Bool("nostd", false, "Omit calls to/from std packages.")
-	nointerFlag = flag.Bool("nointer", false, "Omit calls to unexported funcs.")
+	focusFlag   = flag.String("focus", "main", "Focus specific package using name or import path.")
+	groupFlag   = flag.String("group", "", "Grouping functions by packages and/or types [pkg, type] (separated by comma)")
+	limitFlag   = flag.String("limit", "", "Limit package paths to given prefixes (separated by comma)")
+	ignoreFlag  = flag.String("ignore", "", "Ignore package paths containing given prefixes (separated by comma)")
+	includeFlag = flag.String("include", "", "Include package paths with given prefixes (separated by comma)")
+	nostdFlag   = flag.Bool("nostd", false, "Omit calls to/from packages in standard library.")
+	nointerFlag = flag.Bool("nointer", false, "Omit calls to unexported functions.")
 	testFlag    = flag.Bool("tests", false, "Include test code.")
 	debugFlag   = flag.Bool("debug", false, "Enable verbose log.")
 	versionFlag = flag.Bool("version", false, "Show version and exit.")
-	httpFlag    = flag.String("http", ":7878", "Web server")
+	httpFlag    = flag.String("http", ":7878", "HTTP service address.")
 )
 
 func main() {
