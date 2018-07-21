@@ -5,15 +5,11 @@ import (
 	"fmt"
 	"go/build"
 	"go/types"
-	"io"
-	"os"
 	"strings"
 
 	"golang.org/x/tools/go/callgraph"
 	"golang.org/x/tools/go/ssa"
 )
-
-var output io.Writer = os.Stdout
 
 func isSynthetic(edge *callgraph.Edge) bool {
 	return edge.Caller.Func.Pkg == nil || edge.Callee.Func.Synthetic != ""
@@ -253,10 +249,12 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 						Attrs: dotAttrs{
 							"penwidth":  "0.8",
 							"fontsize":  "16",
-							"label":     label,
+							"label":     fmt.Sprintf("[%s]", label),
 							"style":     "filled",
 							"fillcolor": "lightyellow",
 							"URL":       fmt.Sprintf("/?f=%s", key),
+							"fontname":  "bold",
+							"tooltip":   fmt.Sprintf("package %s", label),
 						},
 					}
 					if pkg.Goroot {

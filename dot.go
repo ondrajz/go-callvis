@@ -4,16 +4,40 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"text/template"
 )
 
+// location of dot executable for converting from .dot to .svg
+// it's usually at: /usr/bin/dot
+var dotExe string
+
+func dotToImage(dot string) (string, error) {
+	if dotExe == "" {
+		dot, err := exec.LookPath("dot")
+		if err != nil {
+			log.Fatalln("unable to find program 'dot', please install it or check your PATH")
+		}
+		dotExe = dot
+	}
+
+	img := filepath.Join(os.TempDir(), fmt.Sprintf("go-callvis_export.svg"))
+	cmd := exec.Command(dotExe, "-Tsvg", "-o", img)
+	cmd.Stdin = strings.NewReader(dot)
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+	return img, nil
+}
+
 var (
 	minlen  uint
 	nodesep float64
-)
 
-var (
 	FontTitle = "Consolas"
 	FontNode  = "Tahoma"
 )

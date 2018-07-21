@@ -8,9 +8,7 @@ import (
 	"go/build"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -38,11 +36,21 @@ var (
 	httpFlag    = flag.String("http", ":7878", "HTTP service address.")
 )
 
-func main() {
+func usage() {
+	fmt.Fprintf(os.Stderr, "Usage: go-callvis [flags] package\n")
+	fmt.Fprintf(os.Stderr, "\n")
+	flag.PrintDefaults()
+	os.Exit(2)
+}
+
+func init() {
 	// Graphviz options
 	flag.UintVar(&minlen, "minlen", 2, "Minimum edge length (for wider output).")
 	flag.Float64Var(&nodesep, "nodesep", 0.35, "Minimum space between two adjacent nodes in the same rank (for taller output).")
+	flag.Usage = usage
+}
 
+func main() {
 	flag.Parse()
 
 	if *versionFlag {
@@ -53,19 +61,17 @@ func main() {
 		log.SetFlags(log.Lmicroseconds)
 	}
 
+	withTests := *testFlag
+	httpAddr := *httpFlag
+
 	args := flag.Args()
-	tests := *testFlag
-	/*if mains, err := getMains(conf focusFlag, groupBy, limitPaths, ignorePaths, *nostdFlag, *testFlag,, flag.Args()); err != nil {
-		fmt.Fprintf(os.Stderr, "go-callvis: %s\n", err)
-		os.Exit(1)
-	}*/
-	if len(args) == 0 {
-		log.Fatalln("missing arguments")
+	if flag.NArg() != 1 {
+		usage()
 	}
 
 	t0 := time.Now()
 	conf := loader.Config{Build: &build.Default}
-	_, err := conf.FromArgs(args, tests)
+	_, err := conf.FromArgs(args, withTests)
 	if err != nil {
 		log.Fatalln("invalid args:", err)
 	}
@@ -73,17 +79,16 @@ func main() {
 	if err != nil {
 		log.Fatalln("failed conf load:", err)
 	}
-	logf("loading took: %v", time.Since(t0))
-	logf("%d imported (%d created)", len(load.Imported), len(load.Created))
+	logf("loading.. %d imported (%d created) took: %v",
+		len(load.Imported), len(load.Created), time.Since(t0))
 
 	t0 = time.Now()
 	prog := ssautil.CreateProgram(load, 0)
 	prog.Build()
 	pkgs := prog.AllPackages()
-	logf("building took: %v", time.Since(t0))
 
 	var mains []*ssa.Package
-	if tests {
+	if withTests {
 		for _, pkg := range pkgs {
 			if main := prog.CreateTestMainPackage(pkg); main != nil {
 				mains = append(mains, main)
@@ -98,7 +103,8 @@ func main() {
 			log.Fatalln("no main packages")
 		}
 	}
-	logf("%d packages (%d main)", len(pkgs), len(mains))
+	logf("building.. %d packages (%d main) took: %v",
+		len(pkgs), len(mains), time.Since(t0))
 
 	t0 = time.Now()
 	ptrcfg := &pointer.Config{
@@ -111,11 +117,6 @@ func main() {
 	}
 	logf("analysis took: %v", time.Since(t0))
 
-	//handler()
-	/*	fmt.Println("\n\n//-----")
-		nostd = false
-		handler()*/
-
 	a := analysis{
 		conf:   conf,
 		pkgs:   pkgs,
@@ -125,13 +126,10 @@ func main() {
 
 	http.HandleFunc("/", a.handler)
 
-	web := &url.URL{
-		Scheme: "http",
-		Host:   "localhost" + *httpFlag,
+	log.Printf("http serving at %s", httpAddr)
+	if err := http.ListenAndServe(httpAddr, nil); err != nil {
+		log.Fatal(err)
 	}
-	log.Printf("serving at %s", web)
-
-	log.Fatal(http.ListenAndServe(*httpFlag, nil))
 }
 
 type analysis struct {
@@ -147,6 +145,10 @@ func (a *analysis) handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logf("----------------------")
+	logf(" => handling request:  %v", r.URL)
+	logf("----------------------")
+
 	focus := *focusFlag
 	nostd := *nostdFlag
 	nointer := *nointerFlag
@@ -155,34 +157,27 @@ func (a *analysis) handler(w http.ResponseWriter, r *http.Request) {
 	ignore := *ignoreFlag
 	include := *includeFlag
 
-	f := r.FormValue("f")
-	if f == "all" {
+	if f := r.FormValue("f"); f == "all" {
 		focus = ""
 	} else if f != "" {
 		focus = f
 	}
-	std := r.FormValue("std")
-	if std != "" {
+	if std := r.FormValue("std"); std != "" {
 		nostd = false
 	}
-	inter := r.FormValue("nointer")
-	if inter != "" {
+	if inter := r.FormValue("nointer"); inter != "" {
 		nointer = true
 	}
-	g := r.FormValue("group")
-	if g != "" {
+	if g := r.FormValue("group"); g != "" {
 		group = g
 	}
-	l := r.FormValue("limit")
-	if l != "" {
+	if l := r.FormValue("limit"); l != "" {
 		limit = l
 	}
-	ign := r.FormValue("ignore")
-	if ign != "" {
+	if ign := r.FormValue("ignore"); ign != "" {
 		ignore = ign
 	}
-	inc := r.FormValue("include")
-	if inc != "" {
+	if inc := r.FormValue("include"); inc != "" {
 		include = inc
 	}
 
@@ -193,15 +188,13 @@ func (a *analysis) handler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if g != "pkg" && g != "type" {
-			//fmt.Fprintf(os.Stderr, "go-callvis: %s\n", "invalid group option")
-			//os.Exit(1)
 			http.Error(w, "invalid group option", http.StatusInternalServerError)
 			return
 		}
 		groupBy[g] = true
 	}
 
-	limitPaths := []string{}
+	var limitPaths []string
 	for _, p := range strings.Split(limit, ",") {
 		p = strings.TrimSpace(p)
 		if p != "" {
@@ -209,7 +202,7 @@ func (a *analysis) handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ignorePaths := []string{}
+	var ignorePaths []string
 	for _, p := range strings.Split(ignore, ",") {
 		p = strings.TrimSpace(p)
 		if p != "" {
@@ -217,7 +210,7 @@ func (a *analysis) handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	includePaths := []string{}
+	var includePaths []string
 	for _, p := range strings.Split(include, ",") {
 		p = strings.TrimSpace(p)
 		if p != "" {
@@ -268,12 +261,12 @@ func (a *analysis) handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Form.Get("format") == "dot" {
+		log.Println("writing dot output..")
 		fmt.Fprint(w, dot)
 		return
 	}
 
-	log.Println("dot to image..")
-	//fmt.Fprintln(w, dot)
+	log.Println("converting dot to svg..")
 	img, err := dotToImage(dot)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -283,49 +276,6 @@ func (a *analysis) handler(w http.ResponseWriter, r *http.Request) {
 	log.Println("serving file:", img)
 	http.ServeFile(w, r, img)
 }
-
-func dotToImage(dot string) (string, error) {
-	img := "/tmp/test000.svg"
-	cmd := exec.Command("/usr/bin/dot", "-Tsvg", "-o", img)
-	cmd.Stdin = strings.NewReader(dot)
-	/*cmd.Stderr = os.Stderr
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return "", err
-	}*/
-	/*stdout, err := cmd.StdoutPipe()
-	if nil != err {
-		return "", err
-	}
-	reader := bufio.NewReader(stdout)
-	go func(reader io.Reader) {
-		scanner := bufio.NewScanner(reader)
-		for scanner.Scan() {
-			log.Printf("Reading from subprocess: %s", scanner.Text())
-			stdin.Write([]byte(dot))
-		}
-	}(reader)*/
-	/*go func() {
-		_, err := stdin.Write([]byte(dot))
-		if err != nil {
-			log.Println("stdin.Write error", err)
-		}
-	}()*/
-	if err := cmd.Run(); err != nil {
-		return "", err
-	}
-	return img, nil
-}
-
-/*
-func getMains( ctxt *build.Context, focus string, groupBy map[string]bool, limitPaths, ignorePaths []string, nostd, tests bool, args []string) ([]*ssa.Package, error) {
-
-
-    return mains, result, nil
-}*/
-/*
-func serve(mainPkg *types.Package, ) {
-}*/
 
 func logf(f string, a ...interface{}) {
 	if *debugFlag {
