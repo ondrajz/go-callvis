@@ -127,9 +127,7 @@ Here is an example for the project [syncthing](https://github.com/syncthing/sync
 
 ## Community
 
-Join [#go-callvis](https://gophers.slack.com/archives/go-callvis) channel at [gophers.slack.com](http://gophers.slack.com).
-
-> *Not a member yet?* [Get invitation](https://gophersinvite.herokuapp.com).
+Join [#go-callvis](https://gophers.slack.com/archives/go-callvis) channel at [gophers.slack.com](http://gophers.slack.com). (*not a member yet?* [get invitation](https://gophersinvite.herokuapp.com))
 
 ### How to help
 
