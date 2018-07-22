@@ -20,7 +20,8 @@ the code much higher or when you are just simply trying to understand code of so
 
 ### Features
 
-- :new: output is now dynamically served via HTTP using SVG format with URL on packages for interactive view
+- :new: interactive view using HTTP server that serves SVG images 
+  containing URLs on packages to change focused package dynamically
 - group functions by package and/or methods by type
 - filter packages to specific import path prefixes
 - omit various types of function calls
