@@ -8,21 +8,24 @@
   <a href="https://gophers.slack.com/archives/go-callvis"><img src="https://img.shields.io/badge/gophers%20slack-%23go--callvis-ff69b4.svg" alt="Slack channel"></a>
 </p>
 
-<p align="center"><b>go-callvis</b> is a development tool to help visualize call graph of your Go program using Graphviz's dot format.</p>
+<p align="center"><b>go-callvis</b> is a development tool to help visualize call graph of a Go program using interactive view.</p>
 
 ---
 
 ## Introduction
 
-Purpose of this tool is to provide a visual overview of your program by using the data from call graph and its relations with packages and types. This is especially useful in larger projects where the complexity of the code rises or when you are just simply trying to understand code structure of somebody else.
+The purpose of this tool is to provide developers with a visual overview of a Go program using data from call graph 
+and its relations with packages and types. This is especially useful in larger projects where the complexity of 
+the code much higher or when you are just simply trying to understand code of somebody else.
 
 ### Features
 
-- focus specific package in a program
-- group functions by package and methods by type
-- limit packages to custom path prefixes
-- ignore packages containing path prefixes
-- omit calls from/to std packages
+- focus specific package in the program
+- group functions by package and/or methods by type
+- filter packages to specific import path prefixes
+- omit various types of function calls
+- :boom: interactive view using HTTP server that serves SVG images 
+  containing URLs on packages to change focused package dynamically
 
 ### Output preview
 
@@ -32,53 +35,40 @@ Purpose of this tool is to provide a visual overview of your program by using th
 
 ### How it works
 
-It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with Graphviz tools.
+It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and 
+uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with Graphviz tools.
 
 ## Reference guide
 
-Here you can find descriptions for all possible kinds of calls and groups.
+Here you can find descriptions for various types of output.
 
 ### Packages / Types
 
-###### Represented as subgraphs (clusters) in output.
-
-**Packages**
-- _**normal** corners_
-- _label on the **top**_
-
-**Types**
-- _**rounded** corners_
-- _label on the **bottom**_
-
 Represents  | Style
 ----------: | :-------------
-`focused`   | _**blue** color_
-`stdlib`    | _**green** color_
-`other`     | _**yellow** color_
+`focused`   | **blue** color
+`stdlib`    | **green** color
+`other`     | **yellow** color
 
 ### Functions / Methods
 
-###### Represented as nodes in output.
-
 Represents   | Style
 -----------: | :--------------
-`exported`   | _**bold** border_
-`unexported` | _**normal** border_
-`anonymous`  | _**dotted** border_
+`exported`   | **bold** border
+`unexported` | **normal** border
+`anonymous`  | **dotted** border
 
 ### Calls
 
-###### Represented as edges in output.
-
 Represents   | Style
 -----------: | :-------------
-`internal`   | _**black** color_
-`external`   | _**brown** color_
-`static`     | _**solid** line_
-`dynamic`    | _**dashed** line_
-`regular`    | _**simple** arrow_
-`concurrent` | _arrow with **circle**_
-`deferred`   | _arrow with **diamond**_
+`internal`   | **black** color
+`external`   | **brown** color
+`static`     | **solid** line
+`dynamic`    | **dashed** line
+`regular`    | **simple** arrow
+`concurrent` | arrow with **circle**
+`deferred`   | arrow with **diamond**
 
 ## Quick start
 
@@ -96,26 +86,36 @@ cd $GOPATH/src/github.com/TrueFurby/go-callvis && make
 
 ### Usage
 
-`go-callvis [OPTIONS] <main pkg> | dot -Tpng -o output.png`
+`go-callvis [flags] <main package>`
 
-### Options
+This will start HTTP server listening at [http://localhost:7878/](http://localhost:7878/). You can change it via `-http` flag. 
+
+#### Flags
 
 ```
 -focus string
       Focus package with import path or name. (default: main)
--limit string
-      Limit package paths to prefix. (separate multiple by comma)
 -group string
-      Grouping functions by [pkg, type]. (separate multiple by comma)
+    Grouping functions by packages and/or types. [pkg, type] (separated by comma)
+-http string
+	HTTP service address. (default ":7878")
+-limit string
+    Limit package paths to prefix. (separated by comma)
 -ignore string
-      Ignore package paths with prefix. (separate multiple by comma)
+    Ignore package paths with prefix. (separated by comma)
+-include string
+   	Include package paths with given prefixes (separated by comma)
+-nointer
+	Omit calls to unexported functions.
 -nostd
-      Omit calls from/to std packages.
--minlen uint
-      Minimum edge length (for wider output). (default: 2)
--nodesep float
-      Minimum space between two adjacent nodes in the same rank (for taller output). (default: 0.35)
+	Omit calls to/from packages in standard library.
+-tags build tags
+	a list of build tags to consider satisfied during the build.
+-tests
+	Include test code.
 ```
+
+Run `go-callvis -h` to list all supported flags.
 
 ## Examples
 
@@ -127,28 +127,26 @@ Here is an example for the project [syncthing](https://github.com/syncthing/sync
 
 ## Community
 
-Join [#go-callvis](https://gophers.slack.com/archives/go-callvis) channel at [gophers.slack.com](http://gophers.slack.com).
-
-> *Not a member yet?* [Get invitation](https://gophersinvite.herokuapp.com).
+Join [#go-callvis](https://gophers.slack.com/archives/go-callvis) channel at [gophers.slack.com](http://gophers.slack.com). (*not a member yet?* [get invitation](https://gophersinvite.herokuapp.com))
 
 ### How to help
 
-###### Did you find any bugs or have some suggestions?
-Feel free to open [new issue](https://github.com/TrueFurby/go-callvis/issues/new) or start discussion in the slack channel.
+Did you find any bugs or have some suggestions?
+- Feel free to open [new issue](https://github.com/TrueFurby/go-callvis/issues/new) or start discussion in the slack channel.
 
-###### Do you want to contribute to the development?
-Fork the project and do a pull request. [Here](https://github.com/TrueFurby/go-callvis/projects/1) you can find the state of features.
+Do you want to contribute to the project?
+- Fork the repository and open a pull request. [Here](https://github.com/TrueFurby/go-callvis/projects/1) you can find TODO features.
 
 ### Known Issues
 
-###### Each execution takes a lot of time, because currently:
+Each execution takes a lot of time, because currently:
 - the call graph is always generated for the entire program
 - there is yet no caching of call graph data
 
 ---
 
-### Roadmap
+#### Roadmap
 
-#### The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/TrueFurby/goexplorer)! :boom:
+##### The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/TrueFurby/goexplorer)!
 
 > Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.

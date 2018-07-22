@@ -7,14 +7,11 @@ import (
 	"fmt"
 	"go/build"
 	"log"
+	"net/http"
 	"os"
 	"strings"
-	"time"
 
-	"golang.org/x/tools/go/loader"
-	"golang.org/x/tools/go/pointer"
-	"golang.org/x/tools/go/ssa"
-	"golang.org/x/tools/go/ssa/ssautil"
+	"golang.org/x/tools/go/buildutil"
 )
 
 var (
@@ -23,20 +20,38 @@ var (
 
 var (
 	focusFlag   = flag.String("focus", "main", "Focus specific package using name or import path.")
-	limitFlag   = flag.String("limit", "", "Limit import paths to specific prefixes. (separate by comma)")
-	groupFlag   = flag.String("group", "", "Group functions by packages and/or types [pkg, type]. (separate by comma)")
-	ignoreFlag  = flag.String("ignore", "", "Ignore packages with import paths containing prefixes. (separate by comma)")
-	nostdFlag   = flag.Bool("nostd", false, "Exclude calls to/from packages in standard library.")
+	groupFlag   = flag.String("group", "", "Grouping functions by packages and/or types [pkg, type] (separated by comma)")
+	limitFlag   = flag.String("limit", "", "Limit package paths to given prefixes (separated by comma)")
+	ignoreFlag  = flag.String("ignore", "", "Ignore package paths containing given prefixes (separated by comma)")
+	includeFlag = flag.String("include", "", "Include package paths with given prefixes (separated by comma)")
+	nostdFlag   = flag.Bool("nostd", false, "Omit calls to/from packages in standard library.")
+	nointerFlag = flag.Bool("nointer", false, "Omit calls to unexported functions.")
 	testFlag    = flag.Bool("tests", false, "Include test code.")
 	debugFlag   = flag.Bool("debug", false, "Enable verbose log.")
-	versionFlag = flag.Bool("version", false, "Print version and exit.")
+	versionFlag = flag.Bool("version", false, "Show version and exit.")
+	httpFlag    = flag.String("http", ":7878", "HTTP service address.")
 )
 
 func init() {
-	// Graphviz specific options
-	flag.UintVar(&minlen, "minlen", 2, "Minimum edge length (for wider output)")
-	flag.Float64Var(&nodesep, "nodesep", 0.35, "Min. space between two adjacent nodes in same rank (taller output)")
+	flag.Var((*buildutil.TagsFlag)(&build.Default.BuildTags), "tags", buildutil.TagsFlagDoc)
+	// Graphviz options
+	flag.UintVar(&minlen, "minlen", 2, "Minimum edge length (for wider output).")
+	flag.Float64Var(&nodesep, "nodesep", 0.35, "Minimum space between two adjacent nodes in the same rank (for taller output).")
+}
 
+const Usage = `go-callvis: visualize call graph of a Go program.
+
+Usage:
+
+  go-callvis [flags] package
+
+  Package must be main package otherwise -tests flag must be used.
+
+Flags:
+
+`
+
+func main() {
 	flag.Parse()
 
 	if *versionFlag {
@@ -46,128 +61,139 @@ func init() {
 	if *debugFlag {
 		log.SetFlags(log.Lmicroseconds)
 	}
+
+	args := flag.Args()
+	if flag.NArg() != 1 {
+		fmt.Fprintf(os.Stderr, Usage)
+		flag.PrintDefaults()
+		os.Exit(2)
+	}
+
+	tests := *testFlag
+	httpAddr := *httpFlag
+
+	doAnalysis(&build.Default, tests, args)
+
+	http.HandleFunc("/", handler)
+
+	log.Printf("http serving at %s", httpAddr)
+
+	if err := http.ListenAndServe(httpAddr, nil); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func main() {
-	groupBy := make(map[string]bool)
-	for _, g := range strings.Split(*groupFlag, ",") {
+func handler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" && !strings.HasSuffix(r.URL.Path, ".svg") {
+		http.NotFound(w, r)
+		return
+	}
+
+	logf("----------------------")
+	logf(" => handling request:  %v", r.URL)
+	logf("----------------------")
+
+	focus := *focusFlag
+	nostd := *nostdFlag
+	nointer := *nointerFlag
+	group := *groupFlag
+	limit := *limitFlag
+	ignore := *ignoreFlag
+	include := *includeFlag
+
+	if f := r.FormValue("f"); f == "all" {
+		focus = ""
+	} else if f != "" {
+		focus = f
+	}
+	if std := r.FormValue("std"); std != "" {
+		nostd = false
+	}
+	if inter := r.FormValue("nointer"); inter != "" {
+		nointer = true
+	}
+	if g := r.FormValue("group"); g != "" {
+		group = g
+	}
+	if l := r.FormValue("limit"); l != "" {
+		limit = l
+	}
+	if ign := r.FormValue("ignore"); ign != "" {
+		ignore = ign
+	}
+	if inc := r.FormValue("include"); inc != "" {
+		include = inc
+	}
+
+	var groupBy []string
+	for _, g := range strings.Split(group, ",") {
 		g := strings.TrimSpace(g)
 		if g == "" {
 			continue
 		}
 		if g != "pkg" && g != "type" {
-			fmt.Fprintf(os.Stderr, "go-callvis: %s\n", "invalid group option, options: [pkg, type]")
-			os.Exit(1)
+			http.Error(w, "invalid group option", http.StatusInternalServerError)
+			return
 		}
-		groupBy[g] = true
+		groupBy = append(groupBy, g)
 	}
 
-	limitPaths := []string{}
-	for _, p := range strings.Split(*limitFlag, ",") {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			limitPaths = append(limitPaths, p)
-		}
-	}
-
-	ignorePaths := []string{}
-	for _, p := range strings.Split(*ignoreFlag, ",") {
+	var ignorePaths []string
+	for _, p := range strings.Split(ignore, ",") {
 		p = strings.TrimSpace(p)
 		if p != "" {
 			ignorePaths = append(ignorePaths, p)
 		}
 	}
 
-	if err := run(&build.Default, *focusFlag, groupBy, limitPaths, ignorePaths, *nostdFlag, *testFlag, flag.Args()); err != nil {
-		fmt.Fprintf(os.Stderr, "go-callvis: %s\n", err)
-		os.Exit(1)
-	}
-}
-
-func run(ctxt *build.Context, focus string, groupBy map[string]bool, limitPaths, ignorePaths []string, nostd, tests bool, args []string) error {
-	if len(args) == 0 {
-		return fmt.Errorf("missing arguments")
+	var includePaths []string
+	for _, p := range strings.Split(include, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			includePaths = append(includePaths, p)
+		}
 	}
 
-	t0 := time.Now()
-	conf := loader.Config{Build: ctxt}
-	_, err := conf.FromArgs(args, tests)
+	var limitPaths []string
+	for _, p := range strings.Split(limit, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			limitPaths = append(limitPaths, p)
+		}
+	}
+
+	opts := renderOpts{
+		focus:   focus,
+		group:   groupBy,
+		ignore:  ignorePaths,
+		include: includePaths,
+		limit:   limitPaths,
+		nointer: nointer,
+		nostd:   nostd,
+	}
+
+	output, err := Analysis.render(opts)
 	if err != nil {
-		return err
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	load, err := conf.Load()
+
+	if r.Form.Get("format") == "dot" {
+		log.Println("writing dot output..")
+		fmt.Fprint(w, output)
+		return
+	}
+
+	log.Println("converting dot to svg..")
+	img, err := dotToImage(output)
 	if err != nil {
-		return err
-	}
-	logf("loading took: %v", time.Since(t0))
-	logf("%d imported (%d created)", len(load.Imported), len(load.Created))
-
-	t0 = time.Now()
-	prog := ssautil.CreateProgram(load, 0)
-	prog.Build()
-	pkgs := prog.AllPackages()
-	logf("building took: %v", time.Since(t0))
-
-	var focusPkg *build.Package
-	if focus != "" {
-		focusPkg, err = conf.Build.Import(focus, "", 0)
-		if err != nil {
-			if strings.Contains(focus, "/") {
-				return err
-			}
-			// try to find package by name
-			var foundPaths []string
-			for _, p := range pkgs {
-				if p.Pkg.Name() == focus {
-					foundPaths = append(foundPaths, p.Pkg.Path())
-				}
-			}
-			if len(foundPaths) == 0 {
-				return err
-			} else if len(foundPaths) > 1 {
-				for _, p := range foundPaths {
-					fmt.Fprintf(os.Stderr, " - %s\n", p)
-				}
-				return fmt.Errorf("found %d packages with name %q, use import path not name", len(foundPaths), focus)
-			}
-			if focusPkg, err = conf.Build.Import(foundPaths[0], "", 0); err != nil {
-				return err
-			}
-		}
-		logf("focusing: %v", focusPkg.ImportPath)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	var mains []*ssa.Package
-	if tests {
-		for _, pkg := range pkgs {
-			if main := prog.CreateTestMainPackage(pkg); main != nil {
-				mains = append(mains, main)
-			}
-		}
-		if mains == nil {
-			return fmt.Errorf("no tests")
-		}
-	} else {
-		mains = append(mains, ssautil.MainPackages(pkgs)...)
-		if len(mains) == 0 {
-			return fmt.Errorf("no main packages")
-		}
-	}
-	logf("%d packages (%d main)", len(pkgs), len(mains))
+	log.Println("serving file:", img)
+	http.ServeFile(w, r, img)
 
-	t0 = time.Now()
-	ptrcfg := &pointer.Config{
-		Mains:          mains,
-		BuildCallGraph: true,
-	}
-	result, err := pointer.Analyze(ptrcfg)
-	if err != nil {
-		return err
-	}
-	logf("analysis took: %v", time.Since(t0))
-
-	return printOutput(mains[0].Pkg, result.CallGraph,
-		focusPkg, limitPaths, ignorePaths, groupBy, nostd)
 }
 
 func logf(f string, a ...interface{}) {

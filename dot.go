@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"text/template"
 )
@@ -11,6 +15,33 @@ import (
 var (
 	minlen  uint
 	nodesep float64
+)
+
+// location of dot executable for converting from .dot to .svg
+// it's usually at: /usr/bin/dot
+var dotExe string
+
+func dotToImage(dot []byte) (string, error) {
+	if dotExe == "" {
+		dot, err := exec.LookPath("dot")
+		if err != nil {
+			log.Fatalln("unable to find program 'dot', please install it or check your PATH")
+		}
+		dotExe = dot
+	}
+
+	img := filepath.Join(os.TempDir(), fmt.Sprintf("go-callvis_export.svg"))
+	cmd := exec.Command(dotExe, "-Tsvg", "-o", img)
+	cmd.Stdin = bytes.NewReader(dot)
+	if err := cmd.Run(); err != nil {
+		return "", err
+	}
+	return img, nil
+}
+
+const (
+	FontTitle = "Consolas"
+	FontNode  = "Tahoma"
 )
 
 const tmplCluster = `{{define "cluster" -}}
@@ -36,8 +67,8 @@ const tmplEdge = `{{define "node" -}}
 const tmplGraph = `digraph gocallvis {
     label="{{.Title}}";
     labeljust="l";
-    fontname="Ubuntu";
-    fontsize="13";
+    fontname="Arial";
+    fontsize="14";
     rankdir="LR";
     bgcolor="lightgray";
     style="solid";
@@ -45,7 +76,7 @@ const tmplGraph = `digraph gocallvis {
     pad="0.0";
     nodesep="{{.Options.nodesep}}";
 
-    node [shape="ellipse" style="filled" fillcolor="honeydew" fontname="Ubuntu" penwidth="1.0" margin="0.05,0.0"];
+    node [shape="ellipse" style="filled" fillcolor="honeydew" fontname="Verdana" penwidth="1.0" margin="0.05,0.0"];
     edge [minlen="{{.Options.minlen}}"]
 
     {{template "cluster" .Cluster}}

@@ -1,18 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/build"
 	"go/types"
-	"io"
-	"os"
 	"strings"
 
 	"golang.org/x/tools/go/callgraph"
 	"golang.org/x/tools/go/ssa"
 )
-
-var output io.Writer = os.Stdout
 
 func isSynthetic(edge *callgraph.Edge) bool {
 	return edge.Caller.Func.Pkg == nil || edge.Callee.Func.Synthetic != ""
@@ -23,9 +20,16 @@ func inStd(node *callgraph.Node) bool {
 	return pkg.Goroot
 }
 
-func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package, limitPaths, ignorePaths []string, groupBy map[string]bool, nostd bool) error {
-	groupType := groupBy["type"]
-	groupPkg := groupBy["pkg"]
+func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package,
+	limitPaths, ignorePaths, includePaths []string, groupBy []string, nostd, nointer bool) ([]byte, error) {
+	var groupType, groupPkg bool
+	for _, g := range groupBy {
+		if g == "pkg" {
+			groupPkg = true
+		} else if g == "type" {
+			groupType = true
+		}
+	}
 
 	cluster := NewDotCluster("focus")
 	cluster.Attrs = dotAttrs{
@@ -50,6 +54,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 
 	logf("%d limit prefixes: %v", len(limitPaths), limitPaths)
 	logf("%d ignore prefixes: %v", len(ignorePaths), ignorePaths)
+	logf("%d include prefixes: %v", len(includePaths), includePaths)
 	logf("no std packages: %v", nostd)
 
 	var isFocused = func(edge *callgraph.Edge) bool {
@@ -82,6 +87,16 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		return false
 	}
 
+	var inIncludes = func(node *callgraph.Node) bool {
+		pkgPath := node.Func.Pkg.Pkg.Path()
+		for _, p := range includePaths {
+			if strings.HasPrefix(pkgPath, p) {
+				return true
+			}
+		}
+		return false
+	}
+
 	var inLimits = func(node *callgraph.Node) bool {
 		pkgPath := node.Func.Pkg.Pkg.Path()
 		for _, p := range limitPaths {
@@ -98,6 +113,15 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 			if strings.HasPrefix(pkgPath, p) {
 				return true
 			}
+		}
+		return false
+	}
+
+	var isInter = func(edge *callgraph.Edge) bool {
+		//caller := edge.Caller
+		callee := edge.Callee
+		if callee.Func.Object() != nil && !callee.Func.Object().Exported() {
+			return true
 		}
 		return false
 	}
@@ -123,24 +147,45 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 			return nil
 		}
 
-		// limit path prefixes
-		if len(limitPaths) > 0 &&
-			(!inLimits(caller) || !inLimits(callee)) {
-			logf("NOT in limit: %s -> %s", caller, callee)
-			return nil
-		}
-
-		// ignore path prefixes
-		if len(ignorePaths) > 0 &&
-			(inIgnores(caller) || inIgnores(callee)) {
-			return nil
-		}
-
 		// omit std
 		if nostd &&
 			(inStd(caller) || inStd(callee)) {
 			return nil
 		}
+
+		// omit inter
+		if nointer && isInter(edge) {
+			return nil
+		}
+
+		include := false
+		// include path prefixes
+		if len(includePaths) > 0 &&
+			(inIncludes(caller) || inIncludes(callee)) {
+			logf("include: %s -> %s", caller, callee)
+			include = true
+		}
+
+		if !include {
+			// limit path prefixes
+			if len(limitPaths) > 0 &&
+				(!inLimits(caller) || !inLimits(callee)) {
+				logf("NOT in limit: %s -> %s", caller, callee)
+				return nil
+			}
+
+			// ignore path prefixes
+			if len(ignorePaths) > 0 &&
+				(inIgnores(caller) || inIgnores(callee)) {
+				logf("IS ignored: %s -> %s", caller, callee)
+				return nil
+			}
+		}
+
+		//var buf bytes.Buffer
+		//data, _ := json.MarshalIndent(caller.Func, "", " ")
+		//logf("call node: %s -> %s\n %v", caller, callee, string(data))
+		logf("call node: %s -> %s", caller, callee)
 
 		var sprintNode = func(node *callgraph.Node) *dotNode {
 			// only once
@@ -210,9 +255,12 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 						Attrs: dotAttrs{
 							"penwidth":  "0.8",
 							"fontsize":  "16",
-							"label":     label,
+							"label":     fmt.Sprintf("[%s]", label),
 							"style":     "filled",
 							"fillcolor": "lightyellow",
+							"URL":       fmt.Sprintf("/?f=%s", key),
+							"fontname":  "bold",
+							"tooltip":   fmt.Sprintf("package: %s", label),
 						},
 					}
 					if pkg.Goroot {
@@ -238,6 +286,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 							"labelloc":  "b",
 							"style":     "rounded,filled",
 							"fillcolor": "wheat2",
+							"tooltip":   fmt.Sprintf("type: %s", label),
 						},
 					}
 					if isFocused {
@@ -304,7 +353,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	logf("%d/%d edges", len(edges), count)
@@ -321,5 +370,10 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		},
 	}
 
-	return WriteDot(output, dot)
+	var buf bytes.Buffer
+	if err := WriteDot(&buf, dot); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
