@@ -254,7 +254,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 							"fillcolor": "lightyellow",
 							"URL":       fmt.Sprintf("/?f=%s", key),
 							"fontname":  "bold",
-							"tooltip":   fmt.Sprintf("package %s", label),
+							"tooltip":   fmt.Sprintf("package: %s", label),
 						},
 					}
 					if pkg.Goroot {
@@ -280,6 +280,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 							"labelloc":  "b",
 							"style":     "rounded,filled",
 							"fillcolor": "wheat2",
+							"tooltip":   fmt.Sprintf("type: %s", label),
 						},
 					}
 					if isFocused {
