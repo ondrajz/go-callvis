@@ -94,6 +94,7 @@ type renderOpts struct {
 func (a *analysis) render(opts renderOpts) ([]byte, error) {
 	var err error
 	var focusPkg *build.Package
+
 	if opts.focus != "" {
 		focusPkg, err = a.conf.Build.Import(opts.focus, "", 0)
 		if err != nil {
