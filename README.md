@@ -20,11 +20,12 @@ the code much higher or when you are just simply trying to understand code of so
 
 ### Features
 
-- :new: interactive view using HTTP server that serves SVG images 
-  containing URLs on packages to change focused package dynamically
+- focus specific package in the program
 - group functions by package and/or methods by type
 - filter packages to specific import path prefixes
 - omit various types of function calls
+- :new: interactive view using HTTP server that serves SVG images 
+  containing URLs on packages to change focused package dynamically
 
 ### Output preview
 
