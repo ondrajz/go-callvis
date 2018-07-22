@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go/build"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -15,6 +14,8 @@ import (
 	"golang.org/x/tools/go/ssa/ssautil"
 )
 
+var Analysis *analysis
+
 type analysis struct {
 	conf   loader.Config
 	pkgs   []*ssa.Package
@@ -22,7 +23,7 @@ type analysis struct {
 	result *pointer.Result
 }
 
-func newAnalysis(buildCtx *build.Context, tests bool, args []string) *analysis {
+func doAnalysis(buildCtx *build.Context, tests bool, args []string) {
 	t0 := time.Now()
 	conf := loader.Config{Build: buildCtx}
 	_, err := conf.FromArgs(args, tests)
@@ -72,7 +73,7 @@ func newAnalysis(buildCtx *build.Context, tests bool, args []string) *analysis {
 	}
 	logf("analysis took: %v", time.Since(t0))
 
-	return &analysis{
+	Analysis = &analysis{
 		conf:   conf,
 		pkgs:   pkgs,
 		mains:  mains,
@@ -80,140 +81,52 @@ func newAnalysis(buildCtx *build.Context, tests bool, args []string) *analysis {
 	}
 }
 
-func (a *analysis) handler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" && !strings.HasSuffix(r.URL.Path, ".svg") {
-		http.NotFound(w, r)
-		return
-	}
+type renderOpts struct {
+	focus   string
+	group   []string
+	ignore  []string
+	include []string
+	limit   []string
+	nointer bool
+	nostd   bool
+}
 
-	logf("----------------------")
-	logf(" => handling request:  %v", r.URL)
-	logf("----------------------")
-
-	focus := *focusFlag
-	nostd := *nostdFlag
-	nointer := *nointerFlag
-	group := *groupFlag
-	limit := *limitFlag
-	ignore := *ignoreFlag
-	include := *includeFlag
-
-	if f := r.FormValue("f"); f == "all" {
-		focus = ""
-	} else if f != "" {
-		focus = f
-	}
-	if std := r.FormValue("std"); std != "" {
-		nostd = false
-	}
-	if inter := r.FormValue("nointer"); inter != "" {
-		nointer = true
-	}
-	if g := r.FormValue("group"); g != "" {
-		group = g
-	}
-	if l := r.FormValue("limit"); l != "" {
-		limit = l
-	}
-	if ign := r.FormValue("ignore"); ign != "" {
-		ignore = ign
-	}
-	if inc := r.FormValue("include"); inc != "" {
-		include = inc
-	}
-
-	groupBy := make(map[string]bool)
-	for _, g := range strings.Split(group, ",") {
-		g := strings.TrimSpace(g)
-		if g == "" {
-			continue
-		}
-		if g != "pkg" && g != "type" {
-			http.Error(w, "invalid group option", http.StatusInternalServerError)
-			return
-		}
-		groupBy[g] = true
-	}
-
-	var limitPaths []string
-	for _, p := range strings.Split(limit, ",") {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			limitPaths = append(limitPaths, p)
-		}
-	}
-
-	var ignorePaths []string
-	for _, p := range strings.Split(ignore, ",") {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			ignorePaths = append(ignorePaths, p)
-		}
-	}
-
-	var includePaths []string
-	for _, p := range strings.Split(include, ",") {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			includePaths = append(includePaths, p)
-		}
-	}
-
+func (a *analysis) render(opts renderOpts) ([]byte, error) {
 	var err error
 	var focusPkg *build.Package
-	if focus != "" {
-		focusPkg, err = a.conf.Build.Import(focus, "", 0)
+	if opts.focus != "" {
+		focusPkg, err = a.conf.Build.Import(opts.focus, "", 0)
 		if err != nil {
-			if strings.Contains(focus, "/") {
-				http.Error(w, "focus failed", http.StatusInternalServerError)
-				return
+			if strings.Contains(opts.focus, "/") {
+				return nil, fmt.Errorf("focus failed: %v", err)
 			}
 			// try to find package by name
 			var foundPaths []string
 			for _, p := range a.pkgs {
-				if p.Pkg.Name() == focus {
+				if p.Pkg.Name() == opts.focus {
 					foundPaths = append(foundPaths, p.Pkg.Path())
 				}
 			}
 			if len(foundPaths) == 0 {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				return nil, fmt.Errorf("focus failed, could not find package: %v", opts.focus)
 			} else if len(foundPaths) > 1 {
 				for _, p := range foundPaths {
 					fmt.Fprintf(os.Stderr, " - %s\n", p)
 				}
-				err := fmt.Errorf("found %d packages with name %q, use import path not name", len(foundPaths), focus)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				return nil, fmt.Errorf("focus failed, found multiple packages with name: %v", opts.focus)
 			}
 			if focusPkg, err = a.conf.Build.Import(foundPaths[0], "", 0); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				return nil, fmt.Errorf("focus failed: %v", err)
 			}
 		}
 		logf("focusing: %v", focusPkg.ImportPath)
 	}
 
 	dot, err := printOutput(a.mains[0].Pkg, a.result.CallGraph,
-		focusPkg, limitPaths, ignorePaths, includePaths, groupBy, nostd, nointer)
+		focusPkg, opts.limit, opts.ignore, opts.include, opts.group, opts.nostd, opts.nointer)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("processing failed: %v", err)
 	}
 
-	if r.Form.Get("format") == "dot" {
-		log.Println("writing dot output..")
-		fmt.Fprint(w, dot)
-		return
-	}
-
-	log.Println("converting dot to svg..")
-	img, err := dotToImage(dot)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	log.Println("serving file:", img)
-	http.ServeFile(w, r, img)
+	return dot, nil
 }

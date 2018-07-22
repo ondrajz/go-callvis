@@ -21,9 +21,15 @@ func inStd(node *callgraph.Node) bool {
 }
 
 func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package,
-	limitPaths, ignorePaths, includePaths []string, groupBy map[string]bool, nostd, nointer bool) (string, error) {
-	groupType := groupBy["type"]
-	groupPkg := groupBy["pkg"]
+	limitPaths, ignorePaths, includePaths []string, groupBy []string, nostd, nointer bool) ([]byte, error) {
+	var groupType, groupPkg bool
+	for _, g := range groupBy {
+		if g == "pkg" {
+			groupPkg = true
+		} else if g == "type" {
+			groupType = true
+		}
+	}
 
 	cluster := NewDotCluster("focus")
 	cluster.Attrs = dotAttrs{
@@ -347,7 +353,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		return nil
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	logf("%d/%d edges", len(edges), count)
@@ -366,8 +372,8 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 
 	var buf bytes.Buffer
 	if err := WriteDot(&buf, dot); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return buf.String(), nil
+	return buf.Bytes(), nil
 }
