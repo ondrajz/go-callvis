@@ -24,7 +24,7 @@ the code much higher or when you are just simply trying to understand code of so
 - group functions by package and/or methods by type
 - filter packages to specific import path prefixes
 - omit various types of function calls
-- :new: interactive view using HTTP server that serves SVG images 
+- :boom: interactive view using HTTP server that serves SVG images 
   containing URLs on packages to change focused package dynamically
 
 ### Output preview
@@ -147,6 +147,6 @@ Each execution takes a lot of time, because currently:
 
 #### Roadmap
 
-##### The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/TrueFurby/goexplorer)! :boom:
+##### The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/TrueFurby/goexplorer)!
 
 > Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
