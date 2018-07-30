@@ -25,7 +25,7 @@ the code much higher or when you are just simply trying to understand code of so
 - filter packages to specific import path prefixes
 - omit various types of function calls
 - :boom: **NEW!** interactive view using HTTP server that serves SVG images 
-  containing URLs on packages to change focused package dynamically
+  with links to dynamically change focused package
 
 ### Output preview
 
