@@ -6,6 +6,7 @@ BUILD_DIR ?= build
 BINARY	  := go-callvis
 RELEASE	  := $(BUILD_DIR)/$(BINARY)_$(VERSION)-$(GOARCH)
 
+GOPATH := $(firstword $(subst :, ,$(GOPATH)))
 DEP ?= $(GOPATH)/bin/dep
 
 
