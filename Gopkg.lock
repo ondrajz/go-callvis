@@ -3,6 +3,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:7b4cd865877639770d2711dc6278b98466be7ebbe5cdf2c933659b73d6e58213"
+  name = "github.com/pkg/browser"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c90ca0c84f15f81c982e32665bffd8d7aac8f097"
+
+[[projects]]
+  branch = "master"
   digest = "1:d293bbd22e1d2c0a4d86bedadb88471d774b7b0cf03368e6cffc6859153be9f1"
   name = "golang.org/x/tools"
   packages = [
@@ -23,6 +31,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/pkg/browser",
+    "golang.org/x/tools/go/buildutil",
     "golang.org/x/tools/go/callgraph",
     "golang.org/x/tools/go/loader",
     "golang.org/x/tools/go/pointer",
