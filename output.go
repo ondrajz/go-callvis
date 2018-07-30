@@ -44,8 +44,10 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		cluster.Attrs["label"] = focusPkg.Name
 	}
 
-	nodes := []*dotNode{}
-	edges := []*dotEdge{}
+	var (
+		nodes []*dotNode
+		edges []*dotEdge
+	)
 
 	nodeMap := make(map[string]*dotNode)
 	edgeMap := make(map[string]*dotEdge)
