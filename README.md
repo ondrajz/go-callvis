@@ -24,7 +24,7 @@ the code much higher or when you are just simply trying to understand code of so
 - group functions by package and/or methods by type
 - filter packages to specific import path prefixes
 - omit various types of function calls
-- :boom: interactive view using HTTP server that serves SVG images 
+- :boom: **NEW!** interactive view using HTTP server that serves SVG images 
   containing URLs on packages to change focused package dynamically
 
 ### Output preview
@@ -44,31 +44,31 @@ Here you can find descriptions for various types of output.
 
 ### Packages / Types
 
-Represents  | Style
-----------: | :-------------
-`focused`   | **blue** color
-`stdlib`    | **green** color
-`other`     | **yellow** color
+|Represents  | Style|
+|----------: | :-------------|
+|`focused`   | **blue** color|
+|`stdlib`    | **green** color|
+|`other`     | **yellow** color|
 
 ### Functions / Methods
 
-Represents   | Style
------------: | :--------------
-`exported`   | **bold** border
-`unexported` | **normal** border
-`anonymous`  | **dotted** border
+|Represents   | Style|
+|-----------: | :--------------|
+|`exported`   | **bold** border|
+|`unexported` | **normal** border|
+|`anonymous`  | **dotted** border|
 
 ### Calls
 
-Represents   | Style
------------: | :-------------
-`internal`   | **black** color
-`external`   | **brown** color
-`static`     | **solid** line
-`dynamic`    | **dashed** line
-`regular`    | **simple** arrow
-`concurrent` | arrow with **circle**
-`deferred`   | arrow with **diamond**
+|Represents   | Style|
+|-----------: | :-------------|
+|`internal`   | **black** color|
+|`external`   | **brown** color|
+|`static`     | **solid** line|
+|`dynamic`    | **dashed** line|
+|`regular`    | **simple** arrow|
+|`concurrent` | arrow with **circle**|
+|`deferred`   | arrow with **diamond**|
 
 ## Quick start
 
@@ -136,12 +136,6 @@ Did you find any bugs or have some suggestions?
 
 Do you want to contribute to the project?
 - Fork the repository and open a pull request. [Here](https://github.com/TrueFurby/go-callvis/projects/1) you can find TODO features.
-
-### Known Issues
-
-Each execution takes a lot of time, because currently:
-- the call graph is always generated for the entire program
-- there is yet no caching of call graph data
 
 ---
 
