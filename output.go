@@ -196,6 +196,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 				return n
 			}
 
+			// is focused
 			isFocused := focusPkg != nil &&
 				node.Func.Pkg.Pkg.Path() == focusPkg.ImportPath
 			attrs := make(dotAttrs)
@@ -262,7 +263,8 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 							"fillcolor": "lightyellow",
 							"URL":       fmt.Sprintf("/?f=%s", key),
 							"fontname":  "bold",
-							"tooltip":   fmt.Sprintf("package: %s", label),
+							"tooltip":   fmt.Sprintf("package: %s", key),
+							"rank":      "sink",
 						},
 					}
 					if pkg.Goroot {
@@ -288,7 +290,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 							"labelloc":  "b",
 							"style":     "rounded,filled",
 							"fillcolor": "wheat2",
-							"tooltip":   fmt.Sprintf("type: %s", label),
+							"tooltip":   fmt.Sprintf("type: %s", key),
 						},
 					}
 					if isFocused {
