@@ -104,7 +104,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Form.Get("format") == "dot" {
 		log.Println("writing dot output..")
-		fmt.Fprint(w, output)
+		fmt.Fprint(w, string(output))
 		return
 	}
 
