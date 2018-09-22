@@ -13,9 +13,10 @@ This document contains examples of various projects from Github.
 [![syncthing example](../images/syncthing.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/syncthing.png)
 
 ```sh
-# Setup
 go get -u github.com/syncthing/syncthing/
 cd $GOPATH/src/github.com/syncthing/syncthing
+
+# Syncthing needs a special build process, so don't forget to call build.sh
 ./build.sh
 ```
 
