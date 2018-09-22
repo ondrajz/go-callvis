@@ -3,29 +3,33 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7b4cd865877639770d2711dc6278b98466be7ebbe5cdf2c933659b73d6e58213"
+  digest = "1:635ac9478e783f09b2945663e359ebf74bc225b37f9845795d1b247285b458a2"
   name = "github.com/pkg/browser"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c90ca0c84f15f81c982e32665bffd8d7aac8f097"
+  revision = "0a3d74bf9ce488f035cf5bc36f753a711bc74334"
 
 [[projects]]
   branch = "master"
-  digest = "1:d293bbd22e1d2c0a4d86bedadb88471d774b7b0cf03368e6cffc6859153be9f1"
+  digest = "1:e116d5dd784a9373096428ea1e39503d0cfeb9c68340e2c0a19aa657709f6911"
   name = "golang.org/x/tools"
   packages = [
     "container/intsets",
     "go/ast/astutil",
     "go/buildutil",
     "go/callgraph",
+    "go/gcexportdata",
+    "go/internal/cgo",
+    "go/internal/gcimporter",
     "go/loader",
+    "go/packages",
     "go/pointer",
     "go/ssa",
     "go/ssa/ssautil",
     "go/types/typeutil",
   ]
   pruneopts = "UT"
-  revision = "c1def519f03ddf76f16b3e444ee1095d73afa01b"
+  revision = "90fa682c2a6e6a37b3a1364ce2fe1d5e41af9d6d"
 
 [solve-meta]
   analyzer-name = "dep"

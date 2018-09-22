@@ -17,6 +17,7 @@ import (
 var Analysis *analysis
 
 type analysis struct {
+	prog   *ssa.Program
 	conf   loader.Config
 	pkgs   []*ssa.Package
 	mains  []*ssa.Package
@@ -74,6 +75,7 @@ func doAnalysis(buildCtx *build.Context, tests bool, args []string) {
 	logf("analysis took: %v", time.Since(t0))
 
 	Analysis = &analysis{
+		prog:   prog,
 		conf:   conf,
 		pkgs:   pkgs,
 		mains:  mains,
@@ -123,7 +125,7 @@ func (a *analysis) render(opts renderOpts) ([]byte, error) {
 		logf("focusing: %v", focusPkg.ImportPath)
 	}
 
-	dot, err := printOutput(a.mains[0].Pkg, a.result.CallGraph,
+	dot, err := printOutput(a.prog, a.mains[0].Pkg, a.result.CallGraph,
 		focusPkg, opts.limit, opts.ignore, opts.include, opts.group, opts.nostd, opts.nointer)
 	if err != nil {
 		return nil, fmt.Errorf("processing failed: %v", err)

@@ -58,5 +58,6 @@ func runCmd(prog string, args ...string) error {
 	cmd := exec.Command(prog, args...)
 	cmd.Stdout = Stdout
 	cmd.Stderr = Stderr
+	setFlags(cmd)
 	return cmd.Run()
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/build"
 	"go/types"
+	"path/filepath"
 	"strings"
 
 	"golang.org/x/tools/go/callgraph"
@@ -20,7 +21,7 @@ func inStd(node *callgraph.Node) bool {
 	return pkg.Goroot
 }
 
-func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package,
+func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package,
 	limitPaths, ignorePaths, includePaths []string, groupBy []string, nostd, nointer bool) ([]byte, error) {
 	var groupType, groupPkg bool
 	for _, g := range groupBy {
@@ -135,6 +136,10 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		caller := edge.Caller
 		callee := edge.Callee
 
+		pos := prog.Fset.Position(caller.Func.Pos())
+		//file := fmt.Sprintf("%s:%d", pos.Filename, pos.Line)
+		filename := filepath.Base(pos.Filename)
+
 		// omit synthetic calls
 		if isSynthetic(edge) {
 			return nil
@@ -187,7 +192,7 @@ func printOutput(mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Pa
 		//var buf bytes.Buffer
 		//data, _ := json.MarshalIndent(caller.Func, "", " ")
 		//logf("call node: %s -> %s\n %v", caller, callee, string(data))
-		logf("call node: %s -> %s", caller, callee)
+		logf("call node: %s -> %s (%s -> %s) %v\n", caller.Func.Pkg, callee.Func.Pkg, caller, callee, filename)
 
 		var sprintNode = func(node *callgraph.Node) *dotNode {
 			// only once
