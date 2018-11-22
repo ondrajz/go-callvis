@@ -21,7 +21,8 @@ var (
 // it's usually at: /usr/bin/dot
 var dotExe string
 
-func dotToImage(dot []byte) (string, error) {
+// dotToImage generates a SVG using the 'dot' utility, returning the filepath
+func dotToImage(outfname string, dot []byte) (string, error) {
 	if dotExe == "" {
 		dot, err := exec.LookPath("dot")
 		if err != nil {
@@ -29,8 +30,13 @@ func dotToImage(dot []byte) (string, error) {
 		}
 		dotExe = dot
 	}
-
-	img := filepath.Join(os.TempDir(), fmt.Sprintf("go-callvis_export.svg"))
+	
+	var img string
+	if outfname == "" {
+			img = filepath.Join(os.TempDir(), fmt.Sprintf("go-callvis_export.svg"))
+	} else {
+			img = fmt.Sprintf("%s.svg", outfname)
+	}
 	cmd := exec.Command(dotExe, "-Tsvg", "-o", img)
 	cmd.Stdin = bytes.NewReader(dot)
 	if err := cmd.Run(); err != nil {
