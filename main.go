@@ -34,9 +34,6 @@ var (
 	versionFlag = flag.Bool("version", false, "Show version and exit.")
 	httpFlag    = flag.String("http", ":7878", "HTTP service address.")
 	skipBrowser = flag.Bool("skipbrowser", false, "Skip opening browser.")
-	outputFile  = flag.String("output", "", "output file - just output .gv (dot) file, no http service")
-	svgFlag     = flag.Bool("svg", false, "use with -output, also output .svg file")
-	pngFlag     = flag.Bool("png", false, "use with -output, also output .png file")
 )
 
 func init() {
@@ -84,18 +81,14 @@ func main() {
 
 	http.HandleFunc("/", handler)
 
-	if *outputFile != "" {
-		outputDot(*outputFile, *svgFlag, *pngFlag)
-	} else {
-		if !*skipBrowser {
-			go openBrowser(urlAddr)
-		}
+	log.Printf("http serving at %s", urlAddr)
 
-		log.Printf("http serving at %s", urlAddr)
+	if !*skipBrowser {
+		go openBrowser(urlAddr)
+	}
 
-		if err := http.ListenAndServe(httpAddr, nil); err != nil {
-			log.Fatal(err)
-		}
+	if err := http.ListenAndServe(httpAddr, nil); err != nil {
+		log.Fatal(err)
 	}
 }
 
