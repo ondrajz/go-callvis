@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -22,18 +23,20 @@ var (
 )
 
 var (
-	focusFlag   = flag.String("focus", "main", "Focus specific package using name or import path.")
-	groupFlag   = flag.String("group", "", "Grouping functions by packages and/or types [pkg, type] (separated by comma)")
-	limitFlag   = flag.String("limit", "", "Limit package paths to given prefixes (separated by comma)")
-	ignoreFlag  = flag.String("ignore", "", "Ignore package paths containing given prefixes (separated by comma)")
-	includeFlag = flag.String("include", "", "Include package paths with given prefixes (separated by comma)")
-	nostdFlag   = flag.Bool("nostd", false, "Omit calls to/from packages in standard library.")
-	nointerFlag = flag.Bool("nointer", false, "Omit calls to unexported functions.")
-	testFlag    = flag.Bool("tests", false, "Include test code.")
-	debugFlag   = flag.Bool("debug", false, "Enable verbose log.")
-	versionFlag = flag.Bool("version", false, "Show version and exit.")
-	httpFlag    = flag.String("http", ":7878", "HTTP service address.")
-	skipBrowser = flag.Bool("skipbrowser", false, "Skip opening browser.")
+	focusFlag    = flag.String("focus", "main", "Focus specific package using name or import path.")
+	groupFlag    = flag.String("group", "", "Grouping functions by packages and/or types [pkg, type] (separated by comma)")
+	limitFlag    = flag.String("limit", "", "Limit package paths to given prefixes (separated by comma)")
+	ignoreFlag   = flag.String("ignore", "", "Ignore package paths containing given prefixes (separated by comma)")
+	includeFlag  = flag.String("include", "", "Include package paths with given prefixes (separated by comma)")
+	nostdFlag    = flag.Bool("nostd", false, "Omit calls to/from packages in standard library.")
+	nointerFlag  = flag.Bool("nointer", false, "Omit calls to unexported functions.")
+	testFlag     = flag.Bool("tests", false, "Include test code.")
+	debugFlag    = flag.Bool("debug", false, "Enable verbose log.")
+	versionFlag  = flag.Bool("version", false, "Show version and exit.")
+	httpFlag     = flag.String("http", ":7878", "HTTP service address.")
+	skipBrowser  = flag.Bool("skipbrowser", false, "Skip opening browser.")
+	outputFile   = flag.String("file", "output", "output filename - used only if -format specified")
+	outputFormat = flag.String("format", "", "output file format [svg | png] - omit to run in server mode")
 )
 
 func init() {
@@ -54,6 +57,39 @@ Usage:
 Flags:
 
 `
+
+func outputDot(fname string, outputFormat string) {
+	// get cmdline default for analysis
+	opts := analysisSetup()
+	if e := processListArgs(&opts); e != nil {
+		log.Fatalf("%v\n", e)
+	}
+
+	output, err := Analysis.render(opts)
+	if err != nil {
+		log.Fatalf("%v\n", err)
+	}
+
+	log.Println("writing dot output..")
+	writeErr := ioutil.WriteFile(fmt.Sprintf("%s.gv", fname), output, 0755)
+	if writeErr != nil {
+		log.Fatalf("%v\n", writeErr)
+	}
+
+	if outputFormat == "svg" {
+		log.Println("converting dot to svg..")
+		_, err := dotToImage(fmt.Sprintf("%s", fname), "svg", output)
+		if err != nil {
+			log.Fatalf("%v\n", err)
+		}
+	} else if outputFormat == "png" {
+		log.Println("converting dot to png..")
+		_, err := dotToImage(fmt.Sprintf("%s", fname), "png", output)
+		if err != nil {
+			log.Fatalf("%v\n", err)
+		}
+	}
+}
 
 func main() {
 	flag.Parse()
@@ -81,14 +117,19 @@ func main() {
 
 	http.HandleFunc("/", handler)
 
-	log.Printf("http serving at %s", urlAddr)
-
-	if !*skipBrowser {
-		go openBrowser(urlAddr)
-	}
-
-	if err := http.ListenAndServe(httpAddr, nil); err != nil {
-		log.Fatal(err)
+	switch *outputFormat {
+	case "svg":
+		outputDot(*outputFile, *outputFormat)
+	case "png":
+		outputDot(*outputFile, *outputFormat)
+	default:
+		if !*skipBrowser {
+			go openBrowser(urlAddr)
+		}
+		log.Printf("http serving at %s", urlAddr)
+		if err := http.ListenAndServe(httpAddr, nil); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
