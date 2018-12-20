@@ -118,15 +118,7 @@ func main() {
 			log.Fatal(err)
 		}
 	} else {
-
-		switch *outputFormat {
-		case "svg":
-			outputDot(*outputFile, *outputFormat)
-		case "png":
-			outputDot(*outputFile, *outputFormat)
-		default:
-			outputDot(*outputFile, *outputFormat)
-		}
+		outputDot(*outputFile, *outputFormat)
 	}
 }
 
