@@ -122,8 +122,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("converting dot to svg..")
-	img, err := dotToImage("", "svg", output)
+	log.Printf("converting dot to %s..\n", *outputFormat)
+	img, err := dotToImage("", *outputFormat, output)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

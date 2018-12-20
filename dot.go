@@ -31,10 +31,6 @@ func dotToImage(outfname string, format string, dot []byte) (string, error) {
 		dotExe = dot
 	}
 
-	if format != "svg" && format != "png" {
-		log.Fatalf("invalid output format %s\n", format)
-	}
-
 	var img string
 	if outfname == "" {
 		img = filepath.Join(os.TempDir(), fmt.Sprintf("go-callvis_export.%s", format))

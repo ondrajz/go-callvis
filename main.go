@@ -35,8 +35,8 @@ var (
 	versionFlag  = flag.Bool("version", false, "Show version and exit.")
 	httpFlag     = flag.String("http", ":7878", "HTTP service address.")
 	skipBrowser  = flag.Bool("skipbrowser", false, "Skip opening browser.")
-	outputFile   = flag.String("file", "output", "output filename - used only if -format specified")
-	outputFormat = flag.String("format", "", "output file format [svg | png] - omit to run in server mode")
+	outputFile   = flag.String("file", "", "output filename - omit to use server mode")
+	outputFormat = flag.String("format", "svg", "output file format [svg | png | jpg | ...]")
 )
 
 func init() {
@@ -75,19 +75,10 @@ func outputDot(fname string, outputFormat string) {
 	if writeErr != nil {
 		log.Fatalf("%v\n", writeErr)
 	}
-
-	if outputFormat == "svg" {
-		log.Println("converting dot to svg..")
-		_, err := dotToImage(fmt.Sprintf("%s", fname), "svg", output)
-		if err != nil {
-			log.Fatalf("%v\n", err)
-		}
-	} else if outputFormat == "png" {
-		log.Println("converting dot to png..")
-		_, err := dotToImage(fmt.Sprintf("%s", fname), "png", output)
-		if err != nil {
-			log.Fatalf("%v\n", err)
-		}
+	log.Printf("converting dot to %s..\n", outputFormat)
+	_, err = dotToImage(fname, outputFormat, output)
+	if err != nil {
+		log.Fatalf("%v\n", err)
 	}
 }
 
@@ -117,18 +108,24 @@ func main() {
 
 	http.HandleFunc("/", handler)
 
-	switch *outputFormat {
-	case "svg":
-		outputDot(*outputFile, *outputFormat)
-	case "png":
-		outputDot(*outputFile, *outputFormat)
-	default:
+	if *outputFile == "" {
+		*outputFile = "output"
 		if !*skipBrowser {
 			go openBrowser(urlAddr)
 		}
 		log.Printf("http serving at %s", urlAddr)
 		if err := http.ListenAndServe(httpAddr, nil); err != nil {
 			log.Fatal(err)
+		}
+	} else {
+
+		switch *outputFormat {
+		case "svg":
+			outputDot(*outputFile, *outputFormat)
+		case "png":
+			outputDot(*outputFile, *outputFormat)
+		default:
+			outputDot(*outputFile, *outputFormat)
 		}
 	}
 }
