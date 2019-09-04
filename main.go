@@ -101,7 +101,9 @@ func main() {
 	httpAddr := *httpFlag
 	urlAddr := parseHTTPAddr(httpAddr)
 
-	doAnalysis(&build.Default, tests, args)
+	if err := doAnalysis("", tests, args); err != nil {
+		log.Fatal(err)
+	}
 
 	http.HandleFunc("/", handler)
 

@@ -13,7 +13,7 @@ REPOPATH ?= $(ORG)/$(PROJECT)
 BUILD_PACKAGE = $(REPOPATH)
 
 GO_BUILD_TAGS ?= ""
-GO_LDFLAGS := "-X $(REPOPATH).commit=$(GIT_VERSION)"
+GO_LDFLAGS := "-X main.commit=$(GIT_VERSION)"
 GO_FILES := $(shell go list  -f '{{join .Deps "\n"}}' $(BUILD_PACKAGE) | grep $(ORG) | xargs go list -f '{{ range $$file := .GoFiles }} {{$$.Dir}}/{{$$file}}{{"\n"}}{{end}}')
 
 export GO111MODULE=on

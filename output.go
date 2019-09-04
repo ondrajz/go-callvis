@@ -21,7 +21,7 @@ func inStd(node *callgraph.Node) bool {
 	return pkg.Goroot
 }
 
-func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph, focusPkg *build.Package,
+func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph, focusPkg *types.Package,
 	limitPaths, ignorePaths, includePaths []string, groupBy []string, nostd, nointer bool) ([]byte, error) {
 	var groupType, groupPkg bool
 	for _, g := range groupBy {
@@ -42,7 +42,7 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 	}
 	if focusPkg != nil {
 		cluster.Attrs["bgcolor"] = "#e6ecfa"
-		cluster.Attrs["label"] = focusPkg.Name
+		cluster.Attrs["label"] = focusPkg.Name()
 	}
 
 	var (
@@ -63,22 +63,22 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 	var isFocused = func(edge *callgraph.Edge) bool {
 		caller := edge.Caller
 		callee := edge.Callee
-		if caller.Func.Pkg.Pkg.Path() == focusPkg.ImportPath ||
-			callee.Func.Pkg.Pkg.Path() == focusPkg.ImportPath {
+		if caller.Func.Pkg.Pkg.Path() == focusPkg.Path() ||
+			callee.Func.Pkg.Pkg.Path() == focusPkg.Path() {
 			return true
 		}
 		fromFocused := false
 		toFocused := false
 		for _, e := range caller.In {
 			if !isSynthetic(e) &&
-				e.Caller.Func.Pkg.Pkg.Path() == focusPkg.ImportPath {
+				e.Caller.Func.Pkg.Pkg.Path() == focusPkg.Path() {
 				fromFocused = true
 				break
 			}
 		}
 		for _, e := range callee.Out {
 			if !isSynthetic(e) &&
-				e.Callee.Func.Pkg.Pkg.Path() == focusPkg.ImportPath {
+				e.Callee.Func.Pkg.Pkg.Path() == focusPkg.Path() {
 				toFocused = true
 				break
 			}
@@ -203,7 +203,7 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 
 			// is focused
 			isFocused := focusPkg != nil &&
-				node.Func.Pkg.Pkg.Path() == focusPkg.ImportPath
+				node.Func.Pkg.Pkg.Path() == focusPkg.Path()
 			attrs := make(dotAttrs)
 
 			// node label
@@ -342,7 +342,7 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 
 		// colorize calls outside focused pkg
 		if focusPkg != nil &&
-			(calleePkg.Path() != focusPkg.ImportPath || callerPkg.Path() != focusPkg.ImportPath) {
+			(calleePkg.Path() != focusPkg.Path() || callerPkg.Path() != focusPkg.Path()) {
 			attrs["color"] = "saddlebrown"
 		}
 
