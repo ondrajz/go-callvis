@@ -1,9 +1,13 @@
+dist: xenial
+
 language: go
-
 go:
-  - tip
-  - 1.8
+  - "tip"
+  - "1.x"
+  - "1.12.x"
 
-install: make install
+go_import_path: github.com/TrueFurby/go-callvis
 
-script: make test
+script:
+  - make test
+  - make build/go-callvis
