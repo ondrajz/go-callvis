@@ -1,20 +1,25 @@
 SHELL = /bin/bash
 
+GIT_VERSION ?= $(shell git describe --always --tags --always --dirty)
+
 GOOS ?= $(shell go env GOOS)
 GOARCH = amd64
+PLATFORMS := linux-$(GOARCH) darwin-$(GOARCH)
+
 BUILD_DIR ?= ./build
 ORG := github.com/TrueFurby
 PROJECT := go-callvis
 REPOPATH ?= $(ORG)/$(PROJECT)
-
-SUPPORTED_PLATFORMS := linux-$(GOARCH) darwin-$(GOARCH)
 BUILD_PACKAGE = $(REPOPATH)
 
-GIT_VERSION ?= $(shell git describe --always --tags --always --dirty)
-
-GO_BUILD_TAGS := "mytag"
+GO_BUILD_TAGS ?= ""
 GO_LDFLAGS := "-X $(REPOPATH).commit=$(GIT_VERSION)"
 GO_FILES := $(shell go list  -f '{{join .Deps "\n"}}' $(BUILD_PACKAGE) | grep $(ORG) | xargs go list -f '{{ range $$file := .GoFiles }} {{$$.Dir}}/{{$$file}}{{"\n"}}{{end}}')
+
+export GO111MODULE=on
+
+install:
+	go install -tags $(GO_BUILD_TAGS) -ldflags $(GO_LDFLAGS)
 
 $(BUILD_DIR)/$(PROJECT): $(BUILD_DIR)/$(PROJECT)-$(GOOS)-$(GOARCH)
 	cp $(BUILD_DIR)/$(PROJECT)-$(GOOS)-$(GOARCH) $@
@@ -28,18 +33,12 @@ $(BUILD_DIR)/$(PROJECT)-%-$(GOARCH): $(GO_FILES) $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-.PRECIOUS: $(foreach platform, $(SUPPORTED_PLATFORMS), $(BUILD_DIR)/$(PROJECT)-$(platform))
+.PRECIOUS: $(foreach platform, $(PLATFORMS), $(BUILD_DIR)/$(PROJECT)-$(platform))
 
-.PHONY: cross
-cross: $(foreach platform, $(SUPPORTED_PLATFORMS), $(BUILD_DIR)/$(PROJECT)-$(platform).sha256)
+cross: $(foreach platform, $(PLATFORMS), $(BUILD_DIR)/$(PROJECT)-$(platform).sha256)
 
-.PHONY: release
 release: cross
-	@echo "releasing $(BUILD_DIR)/$(PROJECT)"
-	ls -lA $(BUILD_DIR)
-
-install:
-	go install -tags $(GO_BUILD_TAGS) -ldflags $(LDFLAGS)
+	ls -hl $(BUILD_DIR)
 
 test: $(BUILD_DIR)/$(PROJECT)
 	go test -v $(REPOPATH)
@@ -47,4 +46,4 @@ test: $(BUILD_DIR)/$(PROJECT)
 clean:
 	rm -rf $(BUILD_DIR)
 
-.PHONY: install test clean
+.PHONY: cross release install test clean
