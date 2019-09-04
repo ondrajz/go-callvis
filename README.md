@@ -20,12 +20,12 @@ the code much higher or when you are just simply trying to understand code of so
 
 ### Features
 
+- interactive view allowing quick switching between focused packages in web browser
+- **support for Go modules!** 🆕
 - focus specific package in the program
 - group functions by package and/or methods by type
 - filter packages to specific import path prefixes
 - omit various types of function calls
-- :boom: **NEW!** interactive view using HTTP server that serves SVG images 
-  with links to dynamically change focused package
 
 ### Output preview
 
@@ -74,48 +74,65 @@ Here you can find descriptions for various types of output.
 
 #### Requirements
 
-- [Go](https://golang.org/dl/) 1.8+
+- [Go](https://golang.org/dl/) 1.12+
 - [Graphviz](http://www.graphviz.org/download/)
 
 ### Installation
 
 ```sh
 go get -u github.com/TrueFurby/go-callvis
-cd $GOPATH/src/github.com/TrueFurby/go-callvis && make
+# or
+git clone https://github.com/TrueFurby/go-callvis.git
+cd go-callvis && make install
 ```
 
 ### Usage
 
-`go-callvis [flags] <main package>`
+To use the interactive view provided by a web server that serves SVG images of focused packages, you can simply run:
 
-This will start HTTP server listening at [http://localhost:7878/](http://localhost:7878/). You can change it via `-http` flag. 
+`go-callvis [OPTIONS] <main package>`
 
-#### Flags
+> HTTP server is listening on [http://localhost:7878/](http://localhost:7878/) by default.
+
+To generate a single output file use option `-file=<file path>` to choose output file destination. The output format defaults to `svg`, use option `-format=<svg|png|jpg|...>` to pick a different output format.
+
+#### Options
 
 ```
--focus string
-      Focus package with import path or name. (default: main)
--group string
-    Grouping functions by packages and/or types. [pkg, type] (separated by comma)
--http string
-	HTTP service address. (default ":7878")
--limit string
-    Limit package paths to prefix. (separated by comma)
--ignore string
-    Ignore package paths with prefix. (separated by comma)
--include string
-   	Include package paths with given prefixes (separated by comma)
--nointer
-	Omit calls to unexported functions.
--nostd
-	Omit calls to/from packages in standard library.
--tags build tags
-	a list of build tags to consider satisfied during the build.
--tests
-	Include test code.
+Usage of go-callvis:
+  -debug
+    	Enable verbose log.
+  -file string
+    	output filename - omit to use server mode
+  -focus string
+    	Focus specific package using name or import path. (default "main")
+  -format string
+    	output file format [svg | png | jpg | ...] (default "svg")
+  -group string
+    	Grouping functions by packages and/or types [pkg, type] (separated by comma)
+  -http string
+    	HTTP service address. (default ":7878")
+  -ignore string
+    	Ignore package paths containing given prefixes (separated by comma)
+  -include string
+    	Include package paths with given prefixes (separated by comma)
+  -limit string
+    	Limit package paths to given prefixes (separated by comma)
+  -nointer
+    	Omit calls to unexported functions.
+  -nostd
+    	Omit calls to/from packages in standard library.
+  -skipbrowser
+    	Skip opening browser.
+  -tags build tags
+    	a list of build tags to consider satisfied during the build. For more information about build tags, see the description of build constraints in the documentation for the go/build package
+  -tests
+    	Include test code.
+  -version
+    	Show version and exit.
 ```
 
-Run `go-callvis -h` to list all supported flags.
+Run `go-callvis -h` to list all supported options.
 
 ## Examples
 
