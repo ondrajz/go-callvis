@@ -1,9 +1,12 @@
+dist: xenial
+
 language: go
-
 go:
-  - tip
-  - 1.8
+  - "1.13.x"
+  - "1.12.x"
 
-install: make install
+install: true
 
-script: make test
+script:
+  - make test
+  - make install

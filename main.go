@@ -19,10 +19,6 @@ import (
 )
 
 var (
-	Version = "v0.4-dev"
-)
-
-var (
 	focusFlag    = flag.String("focus", "main", "Focus specific package using name or import path.")
 	groupFlag    = flag.String("group", "", "Grouping functions by packages and/or types [pkg, type] (separated by comma)")
 	limitFlag    = flag.String("limit", "", "Limit package paths to given prefixes (separated by comma)")
@@ -82,11 +78,12 @@ func outputDot(fname string, outputFormat string) {
 	}
 }
 
+//noinspection GoUnhandledErrorResult
 func main() {
 	flag.Parse()
 
 	if *versionFlag {
-		fmt.Fprintf(os.Stderr, "go-callvis %s\n", Version)
+		fmt.Fprintln(os.Stderr, Version())
 		os.Exit(0)
 	}
 	if *debugFlag {
@@ -104,7 +101,9 @@ func main() {
 	httpAddr := *httpFlag
 	urlAddr := parseHTTPAddr(httpAddr)
 
-	doAnalysis(&build.Default, tests, args)
+	if err := doAnalysis("", tests, args); err != nil {
+		log.Fatal(err)
+	}
 
 	http.HandleFunc("/", handler)
 

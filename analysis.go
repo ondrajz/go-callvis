@@ -2,13 +2,10 @@ package main
 
 import (
 	"fmt"
-	"go/build"
-	"log"
 	"os"
 	"strings"
-	"time"
 
-	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/pointer"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/ssa/ssautil"
@@ -18,69 +15,65 @@ var Analysis *analysis
 
 type analysis struct {
 	prog   *ssa.Program
-	conf   loader.Config
 	pkgs   []*ssa.Package
 	mains  []*ssa.Package
 	result *pointer.Result
 }
 
-func doAnalysis(buildCtx *build.Context, tests bool, args []string) {
-	t0 := time.Now()
-	conf := loader.Config{Build: buildCtx}
-	_, err := conf.FromArgs(args, tests)
-	if err != nil {
-		log.Fatalln("invalid args:", err)
+func doAnalysis(dir string, tests bool, args []string) error {
+	cfg := &packages.Config{
+		Mode:  packages.LoadAllSyntax,
+		Tests: tests,
+		Dir:   dir,
 	}
-	load, err := conf.Load()
+	initial, err := packages.Load(cfg, args...)
 	if err != nil {
-		log.Fatalln("failed conf load:", err)
+		return err
 	}
-	logf("loading.. %d imported (%d created) took: %v",
-		len(load.Imported), len(load.Created), time.Since(t0))
+	if packages.PrintErrors(initial) > 0 {
+		return fmt.Errorf("packages contain errors")
+	}
 
-	t0 = time.Now()
-
-	prog := ssautil.CreateProgram(load, 0)
+	// Create and build SSA-form program representation.
+	prog, pkgs := ssautil.AllPackages(initial, 0)
 	prog.Build()
-	pkgs := prog.AllPackages()
 
-	var mains []*ssa.Package
-	if tests {
-		for _, pkg := range pkgs {
-			if main := prog.CreateTestMainPackage(pkg); main != nil {
-				mains = append(mains, main)
-			}
-		}
-		if mains == nil {
-			log.Fatalln("no tests")
-		}
-	} else {
-		mains = append(mains, ssautil.MainPackages(pkgs)...)
-		if len(mains) == 0 {
-			log.Fatalln("no main packages")
-		}
+	mains, err := mainPackages(pkgs)
+	if err != nil {
+		return err
 	}
-	logf("building.. %d packages (%d main) took: %v",
-		len(pkgs), len(mains), time.Since(t0))
-
-	t0 = time.Now()
-	ptrcfg := &pointer.Config{
+	config := &pointer.Config{
 		Mains:          mains,
 		BuildCallGraph: true,
 	}
-	result, err := pointer.Analyze(ptrcfg)
+	result, err := pointer.Analyze(config)
 	if err != nil {
-		log.Fatalln("analyze failed:", err)
+		return err // internal error in pointer analysis
 	}
-	logf("analysis took: %v", time.Since(t0))
+	//cg.DeleteSyntheticNodes()
 
 	Analysis = &analysis{
 		prog:   prog,
-		conf:   conf,
 		pkgs:   pkgs,
 		mains:  mains,
 		result: result,
 	}
+	return nil
+}
+
+// mainPackages returns the main packages to analyze.
+// Each resulting package is named "main" and has a main function.
+func mainPackages(pkgs []*ssa.Package) ([]*ssa.Package, error) {
+	var mains []*ssa.Package
+	for _, p := range pkgs {
+		if p != nil && p.Pkg.Name() == "main" && p.Func("main") != nil {
+			mains = append(mains, p)
+		}
+	}
+	if len(mains) == 0 {
+		return nil, fmt.Errorf("no main packages")
+	}
+	return mains, nil
 }
 
 type renderOpts struct {
@@ -95,11 +88,11 @@ type renderOpts struct {
 
 func (a *analysis) render(opts renderOpts) ([]byte, error) {
 	var err error
-	var focusPkg *build.Package
+	var focusPkg *ssa.Package
 
 	if opts.focus != "" {
-		focusPkg, err = a.conf.Build.Import(opts.focus, "", 0)
-		if err != nil {
+		focusPkg = a.prog.ImportedPackage(opts.focus)
+		if focusPkg == nil {
 			if strings.Contains(opts.focus, "/") {
 				return nil, fmt.Errorf("focus failed: %v", err)
 			}
@@ -118,15 +111,16 @@ func (a *analysis) render(opts renderOpts) ([]byte, error) {
 				}
 				return nil, fmt.Errorf("focus failed, found multiple packages with name: %v", opts.focus)
 			}
-			if focusPkg, err = a.conf.Build.Import(foundPaths[0], "", 0); err != nil {
+			// found single package
+			if focusPkg = a.prog.ImportedPackage(foundPaths[0]); focusPkg == nil {
 				return nil, fmt.Errorf("focus failed: %v", err)
 			}
 		}
-		logf("focusing: %v", focusPkg.ImportPath)
+		logf("focusing: %v", focusPkg.Pkg.Path())
 	}
 
 	dot, err := printOutput(a.prog, a.mains[0].Pkg, a.result.CallGraph,
-		focusPkg, opts.limit, opts.ignore, opts.include, opts.group, opts.nostd, opts.nointer)
+		focusPkg.Pkg, opts.limit, opts.ignore, opts.include, opts.group, opts.nostd, opts.nointer)
 	if err != nil {
 		return nil, fmt.Errorf("processing failed: %v", err)
 	}
