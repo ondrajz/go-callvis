@@ -20,7 +20,7 @@ the code much higher or when you are just simply trying to understand code of so
 
 ### Features
 
-- :boom: **support for Go modules!** 🆕
+- 🆕 **support for Go modules!** :boom:
 - interactive view allowing quick switching between focused packages in web browser
 - focus specific package in the program
 - group functions by package and/or methods by type
