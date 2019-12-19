@@ -118,6 +118,10 @@ Usage of go-callvis:
     	Include package paths with given prefixes (separated by comma)
   -limit string
     	Limit package paths to given prefixes (separated by comma)
+  -minlen uint
+    	Minimum edge length (for wider output). (default 2)
+  -nodesep float
+    	Minimum space between two adjacent nodes in the same rank (for taller output). (default 0.35)
   -nointer
     	Omit calls to unexported functions.
   -nostd
