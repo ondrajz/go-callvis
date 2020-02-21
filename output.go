@@ -63,21 +63,20 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 	var isFocused = func(edge *callgraph.Edge) bool {
 		caller := edge.Caller
 		callee := edge.Callee
-		if caller.Func.Pkg.Pkg.Path() == focusPkg.Path() ||
-			callee.Func.Pkg.Pkg.Path() == focusPkg.Path() {
+		if focusPkg != nil && (caller.Func.Pkg.Pkg.Path() == focusPkg.Path() || callee.Func.Pkg.Pkg.Path() == focusPkg.Path()) {
 			return true
 		}
 		fromFocused := false
 		toFocused := false
 		for _, e := range caller.In {
-			if !isSynthetic(e) &&
+			if !isSynthetic(e) && focusPkg != nil &&
 				e.Caller.Func.Pkg.Pkg.Path() == focusPkg.Path() {
 				fromFocused = true
 				break
 			}
 		}
 		for _, e := range callee.Out {
-			if !isSynthetic(e) &&
+			if !isSynthetic(e) && focusPkg != nil &&
 				e.Callee.Func.Pkg.Pkg.Path() == focusPkg.Path() {
 				toFocused = true
 				break

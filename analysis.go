@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go/types"
 	"os"
 	"strings"
 
@@ -87,12 +88,15 @@ type renderOpts struct {
 }
 
 func (a *analysis) render(opts renderOpts) ([]byte, error) {
-	var err error
-	var focusPkg *ssa.Package
+	var (
+		err      error
+		ssaPkg   *ssa.Package
+		focusPkg *types.Package
+	)
 
 	if opts.focus != "" {
-		focusPkg = a.prog.ImportedPackage(opts.focus)
-		if focusPkg == nil {
+		ssaPkg = a.prog.ImportedPackage(opts.focus)
+		if ssaPkg == nil {
 			if strings.Contains(opts.focus, "/") {
 				return nil, fmt.Errorf("focus failed: %v", err)
 			}
@@ -112,15 +116,16 @@ func (a *analysis) render(opts renderOpts) ([]byte, error) {
 				return nil, fmt.Errorf("focus failed, found multiple packages with name: %v", opts.focus)
 			}
 			// found single package
-			if focusPkg = a.prog.ImportedPackage(foundPaths[0]); focusPkg == nil {
+			if ssaPkg = a.prog.ImportedPackage(foundPaths[0]); ssaPkg == nil {
 				return nil, fmt.Errorf("focus failed: %v", err)
 			}
 		}
-		logf("focusing: %v", focusPkg.Pkg.Path())
+		focusPkg = ssaPkg.Pkg
+		logf("focusing: %v", focusPkg.Path())
 	}
 
 	dot, err := printOutput(a.prog, a.mains[0].Pkg, a.result.CallGraph,
-		focusPkg.Pkg, opts.limit, opts.ignore, opts.include, opts.group, opts.nostd, opts.nointer)
+		focusPkg, opts.limit, opts.ignore, opts.include, opts.group, opts.nostd, opts.nointer)
 	if err != nil {
 		return nil, fmt.Errorf("processing failed: %v", err)
 	}
