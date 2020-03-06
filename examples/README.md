@@ -10,7 +10,7 @@ This document contains examples of various projects from Github.
 
 ## Syncthing
 
-[![syncthing example](../images/syncthing.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/syncthing.png)
+[![syncthing example](../images/syncthing.png)](https://raw.githubusercontent.com/ofabry/go-callvis/master/images/syncthing.png)
 
 ```sh
 go get -u github.com/syncthing/syncthing/
@@ -29,7 +29,7 @@ go-callvis -focus upgrade -group pkg,type -limit github.com/syncthing/syncthing 
 
 ### Focusing package _upgrade_
 
-[![syncthing example output](../images/syncthing_focus.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/syncthing_focus.png)
+[![syncthing example output](../images/syncthing_focus.png)](https://raw.githubusercontent.com/ofabry/go-callvis/master/images/syncthing_focus.png)
 
 ```sh
 go-callvis -format=png -file=syncthing_focus -focus upgrade -limit github.com/syncthing/syncthing github.com/syncthing/syncthing/cmd/syncthing
@@ -38,7 +38,7 @@ go-callvis -format=png -file=syncthing_focus -focus upgrade -limit github.com/sy
 
 ### Grouping by _packages_
 
-[![syncthing example output pkg](../images/syncthing_group.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/syncthing_group.png)
+[![syncthing example output pkg](../images/syncthing_group.png)](https://raw.githubusercontent.com/ofabry/go-callvis/master/images/syncthing_group.png)
 
 # Generate graph focused on module 'upgrade', output to PNG file
 ```sh
@@ -48,7 +48,7 @@ go-callvis -format=png -file=syncthing_group -focus upgrade -group pkg -limit gi
 
 ### Ignoring package _logger_
 
-[![syncthing example output ignore](../images/syncthing_ignore.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/syncthing_ignore.png)
+[![syncthing example output ignore](../images/syncthing_ignore.png)](https://raw.githubusercontent.com/ofabry/go-callvis/master/images/syncthing_ignore.png)
 
 # Generate graph focused on module 'upgrade' and ignoring 'logger', output to webserver
 ```sh
@@ -58,7 +58,7 @@ go-callvis -focus upgrade -group pkg -ignore github.com/syncthing/syncthing/lib/
 
 ## Docker
 
-[![docker example](../images/docker.png)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/docker.png)
+[![docker example](../images/docker.png)](https://raw.githubusercontent.com/ofabry/go-callvis/master/images/docker.png)
 
 ```sh
 go-callvis -format=png -file=docker -limit github.com/docker/docker -ignore github.com/docker/docker/vendor github.com/docker/docker/cmd/docker | dot -Tpng -o docker.png
@@ -67,7 +67,7 @@ go-callvis -format=png -file=docker -limit github.com/docker/docker -ignore gith
 
 ## Travis CI Worker
 
-[![travis-example](../images/travis_thumb.jpg)](https://raw.githubusercontent.com/TrueFurby/go-callvis/master/images/travis.jpg)
+[![travis-example](../images/travis_thumb.jpg)](https://raw.githubusercontent.com/ofabry/go-callvis/master/images/travis.jpg)
 
 ```sh
 go-callvis -format=svg -file=travis -minlen 3 -nostd -group type,pkg -focus worker -limit github.com/travis-ci/worker -ignore github.com/travis-ci/worker/vendor github.com/travis-ci/worker/cmd/travis-worker && exo-open travis.svg
