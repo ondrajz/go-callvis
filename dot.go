@@ -45,11 +45,6 @@ func dotToImage(outfname string, format string, dot []byte) (string, error) {
 	return img, nil
 }
 
-const (
-	FontTitle = "Consolas"
-	FontNode  = "Tahoma"
-)
-
 const tmplCluster = `{{define "cluster" -}}
     {{printf "subgraph %q {" .}}
         {{printf "%s" .Attrs.Lines}}
