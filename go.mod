@@ -1,4 +1,4 @@
-module github.com/TrueFurby/go-callvis
+module github.com/ofabry/go-callvis
 
 go 1.12
 
