@@ -135,9 +135,10 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 		caller := edge.Caller
 		callee := edge.Callee
 
-		pos := prog.Fset.Position(caller.Func.Pos())
-		//file := fmt.Sprintf("%s:%d", pos.Filename, pos.Line)
-		filename := filepath.Base(pos.Filename)
+		posCaller := prog.Fset.Position(caller.Func.Pos())
+		posCallee := prog.Fset.Position(caller.Func.Pos())
+		//fileCaller := fmt.Sprintf("%s:%d", posCaller.Filename, posCaller.Line)
+		filenameCaller := filepath.Base(posCaller.Filename)
 
 		// omit synthetic calls
 		if isSynthetic(edge) {
@@ -191,11 +192,12 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 		//var buf bytes.Buffer
 		//data, _ := json.MarshalIndent(caller.Func, "", " ")
 		//logf("call node: %s -> %s\n %v", caller, callee, string(data))
-		logf("call node: %s -> %s (%s -> %s) %v\n", caller.Func.Pkg, callee.Func.Pkg, caller, callee, filename)
+		logf("call node: %s -> %s (%s -> %s) %v\n", caller.Func.Pkg, callee.Func.Pkg, caller, callee, filenameCaller)
 
-		var sprintNode = func(node *callgraph.Node) *dotNode {
+		var sprintNode = func(node *callgraph.Node, isCaller bool) *dotNode {
 			// only once
 			key := node.Func.String()
+
 			if n, ok := nodeMap[key]; ok {
 				return n
 			}
@@ -306,8 +308,18 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 				c = c.Clusters[key]
 			}
 
+      fileCaller := fmt.Sprintf("%s:%d", filepath.Base(posCaller.Filename), posCaller.Line)
+      fileCallee := fmt.Sprintf("%s:%d", filepath.Base(posCallee.Filename), posCallee.Line)
+      nodeId := ""
+
+      if isCaller {
+        nodeId = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCaller)
+      } else {
+        nodeId = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCallee)
+      }
+
 			n := &dotNode{
-				ID:    node.Func.String(),
+				ID:    nodeId,
 				Attrs: attrs,
 			}
 
@@ -320,8 +332,8 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 			nodeMap[key] = n
 			return n
 		}
-		callerNode := sprintNode(edge.Caller)
-		calleeNode := sprintNode(edge.Callee)
+		callerNode := sprintNode(edge.Caller, true)
+		calleeNode := sprintNode(edge.Callee, false)
 
 		// edges
 		attrs := make(dotAttrs)
