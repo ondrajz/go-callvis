@@ -308,15 +308,15 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 				c = c.Clusters[key]
 			}
 
-      fileCaller := fmt.Sprintf("%s:%d", filepath.Base(posCaller.Filename), posCaller.Line)
-      fileCallee := fmt.Sprintf("%s:%d", filepath.Base(posCallee.Filename), posCallee.Line)
-      nodeId := ""
+			fileCaller := fmt.Sprintf("%s:%d", filepath.Base(posCaller.Filename), posCaller.Line)
+			fileCallee := fmt.Sprintf("%s:%d", filepath.Base(posCallee.Filename), posCallee.Line)
+			nodeId := ""
 
-      if isCaller {
-        nodeId = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCaller)
-      } else {
-        nodeId = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCallee)
-      }
+			if isCaller {
+				nodeId = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCaller)
+			} else {
+				nodeId = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCallee)
+			}
 
 			n := &dotNode{
 				ID:    nodeId,
