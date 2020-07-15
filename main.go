@@ -50,8 +50,6 @@ var (
 	versionFlag = flag.Bool("version", false, "Show version and exit.")
 )
 
-var Analysis *analysis
-
 func init() {
 	flag.Var((*buildutil.TagsFlag)(&build.Default.BuildTags), "tags", buildutil.TagsFlagDoc)
 	// Graphviz options
