@@ -76,7 +76,6 @@ func parseHTTPAddr(addr string) string {
 }
 
 func openBrowser(url string) {
-	if e := Analysis.processListArgs(); e != nil {
 	time.Sleep(time.Millisecond * 100)
 	if err := browser.OpenURL(url); err != nil {
 		log.Printf("OpenURL error: %v", err)
