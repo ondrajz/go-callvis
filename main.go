@@ -86,7 +86,7 @@ func outputDot(fname string, outputFormat string) {
 	// get cmdline default for analysis
 	Analysis.OptsSetup()
 
-	if e := Analysis.processListArgs(); e != nil {
+	if e := Analysis.ProcessListArgs(); e != nil {
 		log.Fatalf("%v\n", e)
 	}
 
