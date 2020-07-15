@@ -124,7 +124,7 @@ func (a *analysis) ProcessListArgs() (e error) {
 	var includePaths []string
 	var limitPaths   []string
 
-	for _, g := range strings.Split(a.r.group[0], ",") {
+	for _, g := range strings.Split(a.opts.group[0], ",") {
 		g := strings.TrimSpace(g)
 		if g == "" {
 			continue
@@ -136,31 +136,31 @@ func (a *analysis) ProcessListArgs() (e error) {
 		groupBy = append(groupBy, g)
 	}
 
-	for _, p := range strings.Split(a.r.ignore[0], ",") {
+	for _, p := range strings.Split(a.opts.ignore[0], ",") {
 		p = strings.TrimSpace(p)
 		if p != "" {
 			ignorePaths = append(ignorePaths, p)
 		}
 	}
 
-	for _, p := range strings.Split(a.r.include[0], ",") {
+	for _, p := range strings.Split(a.opts.include[0], ",") {
 		p = strings.TrimSpace(p)
 		if p != "" {
 			includePaths = append(includePaths, p)
 		}
 	}
 
-	for _, p := range strings.Split(a.r.limit[0], ",") {
+	for _, p := range strings.Split(a.opts.limit[0], ",") {
 		p = strings.TrimSpace(p)
 		if p != "" {
 			limitPaths = append(limitPaths, p)
 		}
 	}
 
-	a.r.group = groupBy
-	a.r.ignore = ignorePaths
-	a.r.include = includePaths
-	a.r.limit = limitPaths
+	a.opts.group = groupBy
+	a.opts.ignore = ignorePaths
+	a.opts.include = includePaths
+	a.opts.limit = limitPaths
 
 	return
 }
@@ -169,7 +169,7 @@ func (a *analysis) OverrideByHTTP(r *http.Request) () {
 	if f := r.FormValue("f"); f == "all" {
 		a.opts.focus = ""
 	} else if f != "" {
-		opts.focus = f
+		a.opts.focus = f
 	}
 	if std := r.FormValue("std"); std != "" {
 		a.opts.nostd = false

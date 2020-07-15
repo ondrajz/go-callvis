@@ -24,7 +24,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	Analysis.OverrideByHTTP(r)
 
 	// Convert list-style args to []string
-	if e := Analysis.processListArgs(); e != nil {
+	if e := Analysis.ProcessListArgs(); e != nil {
 		http.Error(w, "invalid group option", http.StatusInternalServerError)
 		return
 	}
