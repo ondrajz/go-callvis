@@ -114,7 +114,7 @@ func (a *analysis) OptsSetup() {
 		include: []string{*includeFlag},
 		limit:   []string{*limitFlag},
 		nointer: *nointerFlag,
-		nostd:   *nostdFlag
+		nostd:   *nostdFlag,
 	}
 }
 
