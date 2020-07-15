@@ -18,6 +18,18 @@ import (
 	"golang.org/x/tools/go/buildutil"
 )
 
+const Usage = `go-callvis: visualize call graph of a Go program.
+
+Usage:
+
+  go-callvis [flags] package
+
+  Package should be main package, otherwise -tests flag must be used.
+
+Flags:
+
+`
+
 var (
 	focusFlag    = flag.String("focus", "main", "Focus specific package using name or import path.")
 	groupFlag    = flag.String("group", "pkg", "Grouping functions by packages and/or types [pkg, type] (separated by comma)")
@@ -45,82 +57,9 @@ func init() {
 	flag.Float64Var(&nodesep, "nodesep", 0.35, "Minimum space between two adjacent nodes in the same rank (for taller output).")
 }
 
-const Usage = `go-callvis: visualize call graph of a Go program.
-
-Usage:
-
-  go-callvis [flags] package
-
-  Package should be main package, otherwise -tests flag must be used.
-
-Flags:
-
-`
-
-func outputDot(fname string, outputFormat string) {
-	// get cmdline default for analysis
-	opts := analysisSetup()
-	if e := processListArgs(&opts); e != nil {
-		log.Fatalf("%v\n", e)
-	}
-
-	output, err := Analysis.render(&opts)
-	if err != nil {
-		log.Fatalf("%v\n", err)
-	}
-
-	log.Println("writing dot output..")
-	writeErr := ioutil.WriteFile(fmt.Sprintf("%s.gv", fname), output, 0755)
-	if writeErr != nil {
-		log.Fatalf("%v\n", writeErr)
-	}
-	log.Printf("converting dot to %s..\n", outputFormat)
-	_, err = dotToImage(fname, outputFormat, output)
-	if err != nil {
-		log.Fatalf("%v\n", err)
-	}
-}
-
-//noinspection GoUnhandledErrorResult
-func main() {
-	flag.Parse()
-
-	if *versionFlag {
-		fmt.Fprintln(os.Stderr, Version())
-		os.Exit(0)
-	}
+func logf(f string, a ...interface{}) {
 	if *debugFlag {
-		log.SetFlags(log.Lmicroseconds)
-	}
-
-	args := flag.Args()
-	if flag.NArg() != 1 {
-		fmt.Fprintf(os.Stderr, Usage)
-		flag.PrintDefaults()
-		os.Exit(2)
-	}
-
-	tests := *testFlag
-	httpAddr := *httpFlag
-	urlAddr := parseHTTPAddr(httpAddr)
-
-	if err := doAnalysis("", tests, args); err != nil {
-		log.Fatal(err)
-	}
-
-	http.HandleFunc("/", handler)
-
-	if *outputFile == "" {
-		*outputFile = "output"
-		if !*skipBrowser {
-			go openBrowser(urlAddr)
-		}
-		log.Printf("http serving at %s", urlAddr)
-		if err := http.ListenAndServe(httpAddr, nil); err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		outputDot(*outputFile, *outputFormat)
+		log.Printf(f, a...)
 	}
 }
 
@@ -146,8 +85,75 @@ func openBrowser(url string) {
 	}
 }
 
-func logf(f string, a ...interface{}) {
+func outputDot(fname string, outputFormat string) {
+	// get cmdline default for analysis
+	Analysis.OptsSetup()
+
+	if e := Analysis.ProcessListArgs(); e != nil {
+		log.Fatalf("%v\n", e)
+	}
+
+	output, err := Analysis.Render()
+	if err != nil {
+		log.Fatalf("%v\n", err)
+	}
+
+	log.Println("writing dot output..")
+
+	writeErr := ioutil.WriteFile(fmt.Sprintf("%s.gv", fname), output, 0755)
+	if writeErr != nil {
+		log.Fatalf("%v\n", writeErr)
+	}
+
+	log.Printf("converting dot to %s..\n", outputFormat)
+
+	_, err = dotToImage(fname, outputFormat, output)
+	if err != nil {
+		log.Fatalf("%v\n", err)
+	}
+}
+
+//noinspection GoUnhandledErrorResult
+func main() {
+	flag.Parse()
+
+	if *versionFlag {
+		fmt.Fprintln(os.Stderr, Version())
+		os.Exit(0)
+	}
 	if *debugFlag {
-		log.Printf(f, a...)
+		log.SetFlags(log.Lmicroseconds)
+	}
+
+	if flag.NArg() != 1 {
+		fmt.Fprintf(os.Stderr, Usage)
+		flag.PrintDefaults()
+		os.Exit(2)
+	}
+
+	args     := flag.Args()
+	tests    := *testFlag
+	httpAddr := *httpFlag
+	urlAddr  := parseHTTPAddr(httpAddr)
+
+	if err := Analysis.DoAnalysis("", tests, args); err != nil {
+		log.Fatal(err)
+	}
+
+	http.HandleFunc("/", handler)
+
+	if *outputFile == "" {
+		*outputFile = "output"
+		if !*skipBrowser {
+			go openBrowser(urlAddr)
+		}
+
+		log.Printf("http serving at %s", urlAddr)
+
+		if err := http.ListenAndServe(httpAddr, nil); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		outputDot(*outputFile, *outputFormat)
 	}
 }

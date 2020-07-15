@@ -21,8 +21,18 @@ func inStd(node *callgraph.Node) bool {
 	return pkg.Goroot
 }
 
-func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph, focusPkg *types.Package,
-	limitPaths, ignorePaths, includePaths []string, groupBy []string, nostd, nointer bool) ([]byte, error) {
+func printOutput(
+	prog *ssa.Program,
+	mainPkg *types.Package,
+	cg *callgraph.Graph,
+	focusPkg *types.Package,
+	limitPaths,
+	ignorePaths,
+	includePaths []string,
+	groupBy []string,
+	nostd,
+	nointer bool,
+) ([]byte, error) {
 	var groupType, groupPkg bool
 	for _, g := range groupBy {
 		if g == "pkg" {
@@ -391,7 +401,7 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 	}
 
 	var buf bytes.Buffer
-	if err := WriteDot(&buf, dot); err != nil {
+	if err := dot.WriteDot(&buf); err != nil {
 		return nil, err
 	}
 
