@@ -50,6 +50,8 @@ var (
 	versionFlag = flag.Bool("version", false, "Show version and exit.")
 )
 
+var Analysis *analysis
+
 func init() {
 	flag.Var((*buildutil.TagsFlag)(&build.Default.BuildTags), "tags", buildutil.TagsFlagDoc)
 	// Graphviz options
@@ -136,6 +138,7 @@ func main() {
 	httpAddr := *httpFlag
 	urlAddr  := parseHTTPAddr(httpAddr)
 
+	Analysis = new(analysis)
 	if err := Analysis.DoAnalysis("", tests, args); err != nil {
 		log.Fatal(err)
 	}
