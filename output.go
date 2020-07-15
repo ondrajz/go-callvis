@@ -31,7 +31,7 @@ func printOutput(
 	includePaths []string,
 	groupBy []string,
 	nostd,
-	nointer bool
+	nointer bool,
 ) ([]byte, error) {
 	var groupType, groupPkg bool
 	for _, g := range groupBy {

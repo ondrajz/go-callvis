@@ -54,7 +54,7 @@ var Analysis *analysis
 func (a *analysis) DoAnalysis(
 	dir string,
 	tests bool,
-	args []string
+	args []string,
 ) error {
 	cfg := &packages.Config{
 		Mode:  packages.LoadAllSyntax,
