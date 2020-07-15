@@ -106,7 +106,7 @@ func (a *analysis) DoAnalysis(
 	return nil
 }
 
-func (a *analysis) OptsSetup() 
+func (a *analysis) OptsSetup() {
 	a.opts = &renderOpts{
 		focus:   *focusFlag,
 		group:   []string{*groupFlag},
@@ -240,7 +240,7 @@ func (a *analysis) Render() ([]byte, error) {
 		a.opts.include,
 		a.opts.group,
 		a.opts.nostd,
-		a.opts.nointer
+		a.opts.nointer,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("processing failed: %v", err)
