@@ -146,7 +146,7 @@ func printOutput(
 		callee := edge.Callee
 
 		posCaller := prog.Fset.Position(caller.Func.Pos())
-		posCallee := prog.Fset.Position(caller.Func.Pos())
+		posCallee := prog.Fset.Position(callee.Func.Pos())
 		//fileCaller := fmt.Sprintf("%s:%d", posCaller.Filename, posCaller.Line)
 		filenameCaller := filepath.Base(posCaller.Filename)
 
