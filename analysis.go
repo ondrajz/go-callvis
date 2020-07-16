@@ -90,14 +90,6 @@ func (a *analysis) DoAnalysis(
 		return err // internal error in pointer analysis
 	}
 	//cg.DeleteSyntheticNodes()
-	/*
-	Analysis = &analysis{
-		prog:   prog,
-		pkgs:   pkgs,
-		mains:  mains,
-		result: result,
-	}
-	*/
 
 	a.prog   = prog
 	a.pkgs   = pkgs
