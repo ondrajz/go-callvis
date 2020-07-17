@@ -369,11 +369,6 @@ func printOutput(
 			attrs["color"] = "saddlebrown"
 		}
 
-		e := &dotEdge{
-			From:  callerNode,
-			To:    calleeNode,
-			Attrs: attrs,
-		}
 
 		// use position in file where callee is called as tooltip for the edge
 		fileEdge := fmt.Sprintf(
@@ -386,6 +381,12 @@ func printOutput(
 		// omit duplicate calls, except for tooltip enhancements
 		key := fmt.Sprintf("%s = %s => %s", caller.Func, edge.Description(), callee.Func)
 		if _, ok := edgeMap[key]; !ok {
+			edgeMap[key].Attrs["tooltip"] = fileEdge
+			e := &dotEdge{
+				From:  callerNode,
+				To:    calleeNode,
+				Attrs: attrs,
+			}
 			edgeMap[key] = e
 		} else {
 			// make sure, tooltip is created correctly
