@@ -387,7 +387,7 @@ func printOutput(
 		// omit duplicate calls
 		key := fmt.Sprintf("%s = %s => %s", caller.Func, edge.Description(), callee.Func)
 		if _, ok := edgeMap[key]; !ok {
-			edges = append(edges, e)
+			//edges = append(edges, e)
 			edgeMap[key] = e
 		}
 
@@ -397,6 +397,11 @@ func printOutput(
 		return nil, err
 	}
 
+	// get edges form edgeMap
+
+	for _, v := range myMap {
+		edges = append(edges, v)
+	}
 	logf("%d/%d edges", len(edges), count)
 
 	dot := &dotGraph{
