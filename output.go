@@ -381,7 +381,7 @@ func printOutput(
 		// omit duplicate calls, except for tooltip enhancements
 		key := fmt.Sprintf("%s = %s => %s", caller.Func, edge.Description(), callee.Func)
 		if _, ok := edgeMap[key]; !ok {
-			edgeMap[key].Attrs["tooltip"] = fileEdge
+			attrs["tooltip"] = fileEdge
 			e := &dotEdge{
 				From:  callerNode,
 				To:    calleeNode,
