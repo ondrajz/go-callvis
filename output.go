@@ -389,12 +389,12 @@ func printOutput(
 			edgeMap[key] = e
 		} else {
 			// make sure, tooltip is created correctly
-			if _, okk := edgeMap[key].attrs["tooltip"]; !okk {
-				edgeMap[key].attrs["tooltip"] = fileEdge
+			if _, okk := edgeMap[key].Attrs["tooltip"]; !okk {
+				edgeMap[key].Attrs["tooltip"] = fileEdge
 			} else {
-				edgeMap[key].attrs["tooltip"] = fmt.Sprintf(
+				edgeMap[key].Attrs["tooltip"] = fmt.Sprintf(
 					"%s\n%s",
-					edgeMap[key].attr["tooltip"],
+					edgeMap[key].Attr["tooltip"],
 					fileEdge,
 				)
 			}
