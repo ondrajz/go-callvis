@@ -409,10 +409,17 @@ func printOutput(
 	}
 
 	// get edges form edgeMap
-
-	for _, v := range edgeMap {
-		edges = append(edges, v)
+	for _, e := range edgeMap {
+		eCaller := e.From
+		eCaller.Attrs["tooltip"] = fmt.Sprintf(
+			"%s\n%s",
+			eCaller.Attrs["tooltip"],
+			e.Attrs["tooltip"],
+		)
+		edges = append(edges, e)
 	}
+
+
 	logf("%d/%d edges", len(edges), count)
 
 	dot := &dotGraph{
