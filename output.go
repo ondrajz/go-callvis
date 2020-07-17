@@ -350,15 +350,6 @@ func printOutput(
 		// edges
 		attrs := make(dotAttrs)
 
-		// tool tip
-		fileEdge := fmt.Sprintf(
-			"at %s:%d: calling [%s]",
-			filepath.Base(posEdge.Filename),
-			posEdge.Line,
-			edge.Callee.Func.String(),
-		)
-		attrs["tooltip"] = fileEdge
-
 		// dynamic call
 		if edge.Site != nil && edge.Site.Common().StaticCallee() == nil {
 			attrs["style"] = "dashed"
@@ -384,11 +375,29 @@ func printOutput(
 			Attrs: attrs,
 		}
 
-		// omit duplicate calls
+		// use position in file where callee is called as tooltip for the edge
+		fileEdge := fmt.Sprintf(
+			"at %s:%d: calling [%s]",
+			filepath.Base(posEdge.Filename),
+			posEdge.Line,
+			edge.Callee.Func.String(),
+		)
+
+		// omit duplicate calls, except for tooltip enhancements
 		key := fmt.Sprintf("%s = %s => %s", caller.Func, edge.Description(), callee.Func)
 		if _, ok := edgeMap[key]; !ok {
-			//edges = append(edges, e)
 			edgeMap[key] = e
+		} else {
+			// make sure, tooltip is created correctly
+			if _, okk := edgeMap[key].attrs["tooltip"]; !okk {
+				edgeMap[key].attrs["tooltip"] = fileEdge
+			} else {
+				edgeMap[key].attrs["tooltip"] = fmt.Sprintf(
+					"%s\n%s",
+					edgeMap[key].attr["tooltip"],
+					fileEdge
+				)
+			}
 		}
 
 		return nil
