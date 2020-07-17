@@ -214,9 +214,9 @@ func printOutput(
 			fileCallee  := fmt.Sprintf("%s:%d", filepath.Base(posCallee.Filename), posCallee.Line)
 
 			if isCaller {
-				nodeToolTip = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCaller)
+				nodeTooltip = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCaller)
 			} else {
-				nodeToolTip = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCallee)
+				nodeTooltip = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCallee)
 			}
 
 			if n, ok := nodeMap[key]; ok {
@@ -329,7 +329,7 @@ func printOutput(
 				c = c.Clusters[key]
 			}
 
-			attrs["tooltip"] = nodeToolTip
+			attrs["tooltip"] = nodeTooltip
 
 			n := &dotNode{
 				ID:    node.Func.String(),
