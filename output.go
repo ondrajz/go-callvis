@@ -394,7 +394,7 @@ func printOutput(
 			} else {
 				edgeMap[key].Attrs["tooltip"] = fmt.Sprintf(
 					"%s\n%s",
-					edgeMap[key].Attr["tooltip"],
+					edgeMap[key].Attrs["tooltip"],
 					fileEdge,
 				)
 			}
