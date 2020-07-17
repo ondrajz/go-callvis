@@ -399,7 +399,7 @@ func printOutput(
 
 	// get edges form edgeMap
 
-	for _, v := range myMap {
+	for _, v := range edgeMap {
 		edges = append(edges, v)
 	}
 	logf("%d/%d edges", len(edges), count)
