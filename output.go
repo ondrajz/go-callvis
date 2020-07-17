@@ -355,7 +355,7 @@ func printOutput(
 			"calling %s at %s:%d",
 			edge.Callee.Func.String(),
 			filepath.Base(posEdge.Filename),
-			posEdge.Line
+			posEdge.Line,
 		)
 		attrs["tooltip"] = fileEdge
 
