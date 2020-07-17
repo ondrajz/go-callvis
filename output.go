@@ -147,6 +147,7 @@ func printOutput(
 
 		posCaller := prog.Fset.Position(caller.Func.Pos())
 		posCallee := prog.Fset.Position(callee.Func.Pos())
+		posEdge   := prog.Fset.Position(edge.Pos())
 		//fileCaller := fmt.Sprintf("%s:%d", posCaller.Filename, posCaller.Line)
 		filenameCaller := filepath.Base(posCaller.Filename)
 
@@ -320,6 +321,7 @@ func printOutput(
 
 			fileCaller := fmt.Sprintf("%s:%d", filepath.Base(posCaller.Filename), posCaller.Line)
 			fileCallee := fmt.Sprintf("%s:%d", filepath.Base(posCallee.Filename), posCallee.Line)
+
 			nodeId := ""
 
 			if isCaller {
@@ -347,6 +349,15 @@ func printOutput(
 
 		// edges
 		attrs := make(dotAttrs)
+
+		// tool tip
+		fileEdge := fmt.Sprintf(
+			"calling %s at %s:%d",
+			edge.Callee.Func.String(),
+			filepath.Base(posEdge.Filename),
+			posEdge.Line
+		)
+		attrs["tooltip"] = fileEdge
 
 		// dynamic call
 		if edge.Site != nil && edge.Site.Common().StaticCallee() == nil {
