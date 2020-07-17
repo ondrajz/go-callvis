@@ -410,10 +410,9 @@ func printOutput(
 
 	// get edges form edgeMap
 	for _, e := range edgeMap {
-		eCaller := e.From
-		eCaller.Attrs["tooltip"] = fmt.Sprintf(
+		e.From.Attrs["tooltip"] = fmt.Sprintf(
 			"%s\n%s",
-			eCaller.Attrs["tooltip"],
+			e.From.Attrs["tooltip"],
 			e.Attrs["tooltip"],
 		)
 		edges = append(edges, e)
