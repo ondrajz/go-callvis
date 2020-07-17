@@ -207,7 +207,17 @@ func printOutput(
 
 		var sprintNode = func(node *callgraph.Node, isCaller bool) *dotNode {
 			// only once
-			key := node.Func.String()
+			key         := node.Func.String()
+			nodeTooltip := ""
+
+			fileCaller  := fmt.Sprintf("%s:%d", filepath.Base(posCaller.Filename), posCaller.Line)
+			fileCallee  := fmt.Sprintf("%s:%d", filepath.Base(posCallee.Filename), posCallee.Line)
+
+			if isCaller {
+				nodeToolTip = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCaller)
+			} else {
+				nodeToolTip = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCallee)
+			}
 
 			if n, ok := nodeMap[key]; ok {
 				return n
@@ -319,19 +329,10 @@ func printOutput(
 				c = c.Clusters[key]
 			}
 
-			fileCaller := fmt.Sprintf("%s:%d", filepath.Base(posCaller.Filename), posCaller.Line)
-			fileCallee := fmt.Sprintf("%s:%d", filepath.Base(posCallee.Filename), posCallee.Line)
-
-			nodeId := ""
-
-			if isCaller {
-				nodeId = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCaller)
-			} else {
-				nodeId = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCallee)
-			}
+			attrs["tooltip"] = nodeToolTip
 
 			n := &dotNode{
-				ID:    nodeId,
+				ID:    node.Func.String(),
 				Attrs: attrs,
 			}
 
