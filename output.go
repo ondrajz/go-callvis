@@ -352,10 +352,10 @@ func printOutput(
 
 		// tool tip
 		fileEdge := fmt.Sprintf(
-			"calling %s at %s:%d",
-			edge.Callee.Func.String(),
+			"at %s:%d: calling [%s]",
 			filepath.Base(posEdge.Filename),
 			posEdge.Line,
+			edge.Callee.Func.String(),
 		)
 		attrs["tooltip"] = fileEdge
 
