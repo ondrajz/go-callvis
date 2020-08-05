@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/goccy/go-graphviz"
 )
 
 var (
@@ -21,8 +23,8 @@ var (
 // it's usually at: /usr/bin/dot
 var dotExe string
 
-// dotToImage generates a SVG using the 'dot' utility, returning the filepath
-func dotToImage(outfname string, format string, dot []byte) (string, error) {
+// dotToImageGraphviz generates a SVG using the 'dot' utility, returning the filepath
+func dotToImageGraphviz(outfname string, format string, dot []byte) (string, error) {
 	if dotExe == "" {
 		dot, err := exec.LookPath("dot")
 		if err != nil {
@@ -39,7 +41,37 @@ func dotToImage(outfname string, format string, dot []byte) (string, error) {
 	}
 	cmd := exec.Command(dotExe, fmt.Sprintf("-T%s", format), "-o", img)
 	cmd.Stdin = bytes.NewReader(dot)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("command %q: %v\n%v", cmd, err, stderr.String())
+	}
+	return img, nil
+}
+
+func dotToImage(outfname string, format string, dot []byte) (string, error) {
+	if *graphvizFlag {
+		return dotToImageGraphviz(outfname, format, dot)
+	}
+
+	g := graphviz.New()
+	graph, err := graphviz.ParseBytes(dot)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		if err := graph.Close(); err != nil {
+			log.Fatal(err)
+		}
+		g.Close()
+	}()
+	var img string
+	if outfname == "" {
+		img = filepath.Join(os.TempDir(), fmt.Sprintf("go-callvis_export.%s", format))
+	} else {
+		img = fmt.Sprintf("%s.%s", outfname, format)
+	}
+	if err := g.RenderFilename(graph, graphviz.Format(format), img); err != nil {
 		return "", err
 	}
 	return img, nil

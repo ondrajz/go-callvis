@@ -74,8 +74,8 @@ Here you can find descriptions for various types of output.
 
 #### Requirements
 
-- [Go](https://golang.org/dl/) 1.12+
-- [Graphviz](http://www.graphviz.org/download/)
+- [Go](https://golang.org/dl/) 1.13+
+- [Graphviz](http://www.graphviz.org/download/) (optional, required only with `-graphviz` flag)
 
 ### Installation
 
@@ -108,6 +108,8 @@ Usage of go-callvis:
     	Focus specific package using name or import path. (default "main")
   -format string
     	output file format [svg | png | jpg | ...] (default "svg")
+  -graphviz
+    	Use Graphviz's dot program to render images.
   -group string
     	Grouping functions by packages and/or types [pkg, type] (separated by comma)
   -http string

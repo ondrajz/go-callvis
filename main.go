@@ -29,6 +29,7 @@ var (
 	testFlag     = flag.Bool("tests", false, "Include test code.")
 	debugFlag    = flag.Bool("debug", false, "Enable verbose log.")
 	versionFlag  = flag.Bool("version", false, "Show version and exit.")
+	graphvizFlag = flag.Bool("graphviz", false, "Use Graphviz's dot program to render images.")
 	httpFlag     = flag.String("http", ":7878", "HTTP service address.")
 	skipBrowser  = flag.Bool("skipbrowser", false, "Skip opening browser.")
 	outputFile   = flag.String("file", "", "output filename - omit to use server mode")
