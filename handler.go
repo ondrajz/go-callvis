@@ -106,7 +106,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	// Convert list-style args to []string
 	if e := processListArgs(&opts); e != nil {
-		http.Error(w, "invalid group option", http.StatusInternalServerError)
+		http.Error(w, "invalid parameters", http.StatusBadRequest)
 		return
 	}
 
@@ -123,6 +123,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("converting dot to %s..\n", *outputFormat)
+
 	img, err := dotToImage("", *outputFormat, output)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
