@@ -21,10 +21,11 @@ the code much higher or when you are just simply trying to understand code of so
 ### Features
 
 - 🆕 **support for Go modules!** :boom:
-- interactive view allowing quick switching between focused packages in web browser
 - focus specific package in the program
+- click on package to quickly switch the focus using [interactive viewer](#interactive-viewer)
 - group functions by package and/or methods by type
 - filter packages to specific import path prefixes
+- ignore funcs from standard library
 - omit various types of function calls
 
 ### Output preview
@@ -88,13 +89,19 @@ cd go-callvis && make install
 
 ### Usage
 
+#### Interactive viewer
+
 To use the interactive view provided by a web server that serves SVG images of focused packages, you can simply run:
 
-`go-callvis [OPTIONS] <main package>`
+`go-callvis <target package>` 
 
-> HTTP server is listening on [http://localhost:7878/](http://localhost:7878/) by default.
+HTTP server is listening on [http://localhost:7878/](http://localhost:7878/) by default, use option `-http="ADDR:PORT"` to change HTTP server address.
 
-To generate a single output file use option `-file=<file path>` to choose output file destination. The output format defaults to `svg`, use option `-format=<svg|png|jpg|...>` to pick a different output format.
+#### Render static output
+
+To generate a single output file use option `-file=<file path>` to choose output file destination.
+
+The output format defaults to `svg`, use option `-format=<svg|png|jpg|...>` to pick a different output format.
 
 #### Options
 
@@ -111,7 +118,7 @@ Usage of go-callvis:
   -graphviz
     	Use Graphviz's dot program to render images.
   -group string
-    	Grouping functions by packages and/or types [pkg, type] (separated by comma)
+    	Grouping functions by packages and/or types [pkg, type] (separated by comma) (default "pkg")
   -http string
     	HTTP service address. (default ":7878")
   -ignore string
