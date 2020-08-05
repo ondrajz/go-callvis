@@ -44,7 +44,7 @@ func dotToImageGraphviz(outfname string, format string, dot []byte) (string, err
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("command %q: %v\n%v", cmd, err, stderr.String())
+		return "", fmt.Errorf("command '%v': %v\n%v", cmd, err, stderr.String())
 	}
 	return img, nil
 }
