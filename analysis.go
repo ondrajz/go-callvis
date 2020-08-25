@@ -88,7 +88,7 @@ type renderOpts struct {
 	nostd    bool
 }
 
-func (a *analysis) render(opts renderOpts) ([]byte, error) {
+func (a *analysis) render(opts *renderOpts) ([]byte, error) {
 	var (
 		err      error
 		ssaPkg   *ssa.Package

@@ -80,6 +80,52 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	logf(" => handling request:  %v", r.URL)
 	logf("----------------------")
 
+	opts := buildOptionsFromRequest(r)
+
+	var img string
+	if img = findCachedImg(opts); img != "" {
+		log.Println("serving file:", img)
+		http.ServeFile(w, r, img)
+		return
+	}
+
+	// Convert list-style args to []string
+	if e := processListArgs(opts); e != nil {
+		http.Error(w, "invalid parameters", http.StatusBadRequest)
+		return
+	}
+
+	output, err := Analysis.render(opts)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if r.Form.Get("format") == "dot" {
+		log.Println("writing dot output..")
+		fmt.Fprint(w, string(output))
+		return
+	}
+
+	log.Printf("converting dot to %s..\n", *outputFormat)
+
+	img, err = dotToImage("", *outputFormat, output)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = cacheImg(opts, img)
+	if err != nil {
+		http.Error(w, "cache img error: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	log.Println("serving file:", img)
+	http.ServeFile(w, r, img)
+}
+
+func buildOptionsFromRequest(r *http.Request) *renderOpts {
 	// get cmdline default for analysis
 	opts := analysisSetup()
 
@@ -108,47 +154,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		opts.include[0] = inc
 	}
 
-	var img string
-	if img = findCachedImg(&opts); img != "" {
-		log.Println("serving file:", img)
-		http.ServeFile(w, r, img)
-		return
-	}
-
-	// Convert list-style args to []string
-	if e := processListArgs(&opts); e != nil {
-		http.Error(w, "invalid parameters", http.StatusBadRequest)
-		return
-	}
-
-	output, err := Analysis.render(opts)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if r.Form.Get("format") == "dot" {
-		log.Println("writing dot output..")
-		fmt.Fprint(w, string(output))
-		return
-	}
-
-	log.Printf("converting dot to %s..\n", *outputFormat)
-
-	img, err = dotToImage("", *outputFormat, output)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	err = cacheImg(&opts, img)
-	if err != nil {
-		http.Error(w, "cache img error: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	log.Println("serving file:", img)
-	http.ServeFile(w, r, img)
+	return &opts
 }
 
 func findCachedImg(opts *renderOpts) string {

@@ -64,7 +64,7 @@ func outputDot(fname string, outputFormat string) {
 		log.Fatalf("%v\n", e)
 	}
 
-	output, err := Analysis.render(opts)
+	output, err := Analysis.render(&opts)
 	if err != nil {
 		log.Fatalf("%v\n", err)
 	}
