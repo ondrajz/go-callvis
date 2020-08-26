@@ -181,7 +181,7 @@ func cacheImg(opts *renderOpts, img string) error {
 
 	absCacheDirPrefix := filepath.Join(opts.cacheDir, opts.focus)
 	absCacheDirPath := strings.TrimRightFunc(absCacheDirPrefix, func(r rune) bool {
-		return r != '\\'
+		return r != '\\' && r != '/'
 	})
 	err := os.MkdirAll(absCacheDirPath, os.ModePerm)
 	if err != nil {
