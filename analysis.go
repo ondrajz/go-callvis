@@ -85,6 +85,7 @@ type renderOpts struct {
 	include  []string
 	limit    []string
 	nointer  bool
+	refresh  bool
 	nostd    bool
 }
 

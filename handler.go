@@ -141,6 +141,9 @@ func buildOptionsFromRequest(r *http.Request) *renderOpts {
 	if inter := r.FormValue("nointer"); inter != "" {
 		opts.nointer = true
 	}
+	if refresh := r.FormValue("refresh"); refresh != "" {
+		opts.refresh = true
+	}
 	if g := r.FormValue("group"); g != "" {
 		opts.group[0] = g
 	}
@@ -158,11 +161,15 @@ func buildOptionsFromRequest(r *http.Request) *renderOpts {
 }
 
 func findCachedImg(opts *renderOpts) string {
-	if opts.cacheDir == "" || opts.focus == "" {
+	if opts.cacheDir == "" || opts.refresh {
 		return ""
 	}
 
-	focusFilePath := opts.focus + "." + *outputFormat
+	focus := opts.focus
+	if focus == "" {
+		focus = "all"
+	}
+	focusFilePath := focus + "." + *outputFormat
 	absFilePath := filepath.Join(opts.cacheDir, focusFilePath)
 
 	if exists, err := pathExists(absFilePath); err != nil || !exists {
@@ -170,16 +177,20 @@ func findCachedImg(opts *renderOpts) string {
 		return ""
 	}
 
-	log.Println("hit cached img:", absFilePath)
+	log.Println("hit cached img")
 	return absFilePath
 }
 
 func cacheImg(opts *renderOpts, img string) error {
-	if opts.cacheDir == "" || opts.focus == "" || img == "" {
+	if opts.cacheDir == "" || img == "" {
 		return nil
 	}
 
-	absCacheDirPrefix := filepath.Join(opts.cacheDir, opts.focus)
+	focus := opts.focus
+	if focus == "" {
+		focus = "all"
+	}
+	absCacheDirPrefix := filepath.Join(opts.cacheDir, focus)
 	absCacheDirPath := strings.TrimRightFunc(absCacheDirPrefix, func(r rune) bool {
 		return r != '\\' && r != '/'
 	})
