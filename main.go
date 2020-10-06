@@ -32,6 +32,7 @@ var (
 	skipBrowser  = flag.Bool("skipbrowser", false, "Skip opening browser.")
 	outputFile   = flag.String("file", "", "output filename - omit to use server mode")
 	outputFormat = flag.String("format", "svg", "output file format [svg | png | jpg | ...]")
+	cacheDir     = flag.String("cacheDir", "", "Enable caching to avoid unnecessary re-rendering, you can force rendering by adding 'refresh=true' to the URL query or emptying the cache directory")
 
 	debugFlag   = flag.Bool("debug", false, "Enable verbose log.")
 	versionFlag = flag.Bool("version", false, "Show version and exit.")
@@ -63,7 +64,7 @@ func outputDot(fname string, outputFormat string) {
 		log.Fatalf("%v\n", e)
 	}
 
-	output, err := Analysis.render(opts)
+	output, err := Analysis.render(&opts)
 	if err != nil {
 		log.Fatalf("%v\n", err)
 	}

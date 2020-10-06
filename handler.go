@@ -3,20 +3,24 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
 func analysisSetup() (r renderOpts) {
 	r = renderOpts{
-		focus:   *focusFlag,
-		group:   []string{*groupFlag},
-		ignore:  []string{*ignoreFlag},
-		include: []string{*includeFlag},
-		limit:   []string{*limitFlag},
-		nointer: *nointerFlag,
-		nostd:   *nostdFlag}
+		cacheDir: *cacheDir,
+		focus:    *focusFlag,
+		group:    []string{*groupFlag},
+		ignore:   []string{*ignoreFlag},
+		include:  []string{*includeFlag},
+		limit:    []string{*limitFlag},
+		nointer:  *nointerFlag,
+		nostd:    *nostdFlag}
 
 	return r
 }
@@ -76,36 +80,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	logf(" => handling request:  %v", r.URL)
 	logf("----------------------")
 
-	// get cmdline default for analysis
-	opts := analysisSetup()
+	opts := buildOptionsFromRequest(r)
 
-	// .. and allow overriding by HTTP params
-	if f := r.FormValue("f"); f == "all" {
-		opts.focus = ""
-	} else if f != "" {
-		opts.focus = f
-	}
-	if std := r.FormValue("std"); std != "" {
-		opts.nostd = false
-	}
-	if inter := r.FormValue("nointer"); inter != "" {
-		opts.nointer = true
-	}
-	if g := r.FormValue("group"); g != "" {
-		opts.group[0] = g
-	}
-	if l := r.FormValue("limit"); l != "" {
-		opts.limit[0] = l
-	}
-	if ign := r.FormValue("ignore"); ign != "" {
-		opts.ignore[0] = ign
-	}
-	if inc := r.FormValue("include"); inc != "" {
-		opts.include[0] = inc
+	var img string
+	if img = findCachedImg(opts); img != "" {
+		log.Println("serving file:", img)
+		http.ServeFile(w, r, img)
+		return
 	}
 
 	// Convert list-style args to []string
-	if e := processListArgs(&opts); e != nil {
+	if e := processListArgs(opts); e != nil {
 		http.Error(w, "invalid parameters", http.StatusBadRequest)
 		return
 	}
@@ -124,12 +109,137 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("converting dot to %s..\n", *outputFormat)
 
-	img, err := dotToImage("", *outputFormat, output)
+	img, err = dotToImage("", *outputFormat, output)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	err = cacheImg(opts, img)
+	if err != nil {
+		http.Error(w, "cache img error: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	log.Println("serving file:", img)
 	http.ServeFile(w, r, img)
+}
+
+func buildOptionsFromRequest(r *http.Request) *renderOpts {
+	// get cmdline default for analysis
+	opts := analysisSetup()
+
+	// .. and allow overriding by HTTP params
+	if f := r.FormValue("f"); f == "all" {
+		opts.focus = ""
+	} else if f != "" {
+		opts.focus = f
+	}
+	if std := r.FormValue("std"); std != "" {
+		opts.nostd = false
+	}
+	if inter := r.FormValue("nointer"); inter != "" {
+		opts.nointer = true
+	}
+	if refresh := r.FormValue("refresh"); refresh != "" {
+		opts.refresh = true
+	}
+	if g := r.FormValue("group"); g != "" {
+		opts.group[0] = g
+	}
+	if l := r.FormValue("limit"); l != "" {
+		opts.limit[0] = l
+	}
+	if ign := r.FormValue("ignore"); ign != "" {
+		opts.ignore[0] = ign
+	}
+	if inc := r.FormValue("include"); inc != "" {
+		opts.include[0] = inc
+	}
+
+	return &opts
+}
+
+func findCachedImg(opts *renderOpts) string {
+	if opts.cacheDir == "" || opts.refresh {
+		return ""
+	}
+
+	focus := opts.focus
+	if focus == "" {
+		focus = "all"
+	}
+	focusFilePath := focus + "." + *outputFormat
+	absFilePath := filepath.Join(opts.cacheDir, focusFilePath)
+
+	if exists, err := pathExists(absFilePath); err != nil || !exists {
+		log.Println("not cached img:", absFilePath)
+		return ""
+	}
+
+	log.Println("hit cached img")
+	return absFilePath
+}
+
+func cacheImg(opts *renderOpts, img string) error {
+	if opts.cacheDir == "" || img == "" {
+		return nil
+	}
+
+	focus := opts.focus
+	if focus == "" {
+		focus = "all"
+	}
+	absCacheDirPrefix := filepath.Join(opts.cacheDir, focus)
+	absCacheDirPath := strings.TrimRightFunc(absCacheDirPrefix, func(r rune) bool {
+		return r != '\\' && r != '/'
+	})
+	err := os.MkdirAll(absCacheDirPath, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	absFilePath := absCacheDirPrefix + "." + *outputFormat
+	_, err = copyFile(img, absFilePath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func copyFile(src, dst string) (int64, error) {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }

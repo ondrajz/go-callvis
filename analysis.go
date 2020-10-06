@@ -78,16 +78,18 @@ func mainPackages(pkgs []*ssa.Package) ([]*ssa.Package, error) {
 }
 
 type renderOpts struct {
-	focus   string
-	group   []string
-	ignore  []string
-	include []string
-	limit   []string
-	nointer bool
-	nostd   bool
+	cacheDir string
+	focus    string
+	group    []string
+	ignore   []string
+	include  []string
+	limit    []string
+	nointer  bool
+	refresh  bool
+	nostd    bool
 }
 
-func (a *analysis) render(opts renderOpts) ([]byte, error) {
+func (a *analysis) render(opts *renderOpts) ([]byte, error) {
 	var (
 		err      error
 		ssaPkg   *ssa.Package

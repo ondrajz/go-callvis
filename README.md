@@ -111,6 +111,8 @@ Usage of go-callvis:
     	Enable verbose log.
   -file string
     	output filename - omit to use server mode
+  -cacheDir string
+    	Enable caching to avoid unnecessary re-rendering.
   -focus string
     	Focus specific package using name or import path. (default "main")
   -format string
