@@ -250,7 +250,6 @@ func (a *analysis) Render() ([]byte, error) {
 	return dot, nil
 }
 
-
 func (a *analysis) FindCachedImg() string {
 	if a.opts.cacheDir == "" || a.opts.refresh {
 		return ""
