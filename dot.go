@@ -120,31 +120,7 @@ const tmplGraph = `digraph gocallvis {
 }
 `
 
-func WriteDot(w io.Writer, g *dotGraph) error {
-	t := template.New("dot")
-	for _, s := range []string{tmplCluster, tmplNode, tmplEdge, tmplGraph} {
-		if _, err := t.Parse(s); err != nil {
-			return err
-		}
-	}
-	var buf bytes.Buffer
-	if err := t.Execute(&buf, g); err != nil {
-		return err
-	}
-	_, err := buf.WriteTo(w)
-	return err
-}
-
-type dotGraph struct {
-	Title   string
-	Minlen  uint
-	Attrs   dotAttrs
-	Cluster *dotCluster
-	Nodes   []*dotNode
-	Edges   []*dotEdge
-	Options map[string]string
-}
-
+//==[ type def/func: dotCluster ]===============================================
 type dotCluster struct {
 	ID       string
 	Clusters map[string]*dotCluster
@@ -164,6 +140,7 @@ func (c *dotCluster) String() string {
 	return fmt.Sprintf("cluster_%s", c.ID)
 }
 
+//==[ type def/func: dotNode    ]===============================================
 type dotNode struct {
 	ID    string
 	Attrs dotAttrs
@@ -173,12 +150,14 @@ func (n *dotNode) String() string {
 	return n.ID
 }
 
+//==[ type def/func: dotEdge    ]===============================================
 type dotEdge struct {
 	From  *dotNode
 	To    *dotNode
 	Attrs dotAttrs
 }
 
+//==[ type def/func: dotAttrs   ]===============================================
 type dotAttrs map[string]string
 
 func (p dotAttrs) List() []string {
@@ -195,4 +174,30 @@ func (p dotAttrs) String() string {
 
 func (p dotAttrs) Lines() string {
 	return fmt.Sprintf("%s;", strings.Join(p.List(), ";\n"))
+}
+
+//==[ type def/func: dotGraph   ]===============================================
+type dotGraph struct {
+	Title   string
+	Minlen  uint
+	Attrs   dotAttrs
+	Cluster *dotCluster
+	Nodes   []*dotNode
+	Edges   []*dotEdge
+	Options map[string]string
+}
+
+func (g *dotGraph) WriteDot(w io.Writer) error {
+	t := template.New("dot")
+	for _, s := range []string{tmplCluster, tmplNode, tmplEdge, tmplGraph} {
+		if _, err := t.Parse(s); err != nil {
+			return err
+		}
+	}
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, g); err != nil {
+		return err
+	}
+	_, err := buf.WriteTo(w)
+	return err
 }

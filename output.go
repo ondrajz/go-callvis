@@ -21,8 +21,18 @@ func inStd(node *callgraph.Node) bool {
 	return pkg.Goroot
 }
 
-func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph, focusPkg *types.Package,
-	limitPaths, ignorePaths, includePaths []string, groupBy []string, nostd, nointer bool) ([]byte, error) {
+func printOutput(
+	prog *ssa.Program,
+	mainPkg *types.Package,
+	cg *callgraph.Graph,
+	focusPkg *types.Package,
+	limitPaths,
+	ignorePaths,
+	includePaths []string,
+	groupBy []string,
+	nostd,
+	nointer bool,
+) ([]byte, error) {
 	var groupType, groupPkg bool
 	for _, g := range groupBy {
 		if g == "pkg" {
@@ -135,9 +145,11 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 		caller := edge.Caller
 		callee := edge.Callee
 
-		pos := prog.Fset.Position(caller.Func.Pos())
-		//file := fmt.Sprintf("%s:%d", pos.Filename, pos.Line)
-		filename := filepath.Base(pos.Filename)
+		posCaller := prog.Fset.Position(caller.Func.Pos())
+		posCallee := prog.Fset.Position(callee.Func.Pos())
+		posEdge   := prog.Fset.Position(edge.Pos())
+		//fileCaller := fmt.Sprintf("%s:%d", posCaller.Filename, posCaller.Line)
+		filenameCaller := filepath.Base(posCaller.Filename)
 
 		// omit synthetic calls
 		if isSynthetic(edge) {
@@ -191,11 +203,22 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 		//var buf bytes.Buffer
 		//data, _ := json.MarshalIndent(caller.Func, "", " ")
 		//logf("call node: %s -> %s\n %v", caller, callee, string(data))
-		logf("call node: %s -> %s (%s -> %s) %v\n", caller.Func.Pkg, callee.Func.Pkg, caller, callee, filename)
+		logf("call node: %s -> %s (%s -> %s) %v\n", caller.Func.Pkg, callee.Func.Pkg, caller, callee, filenameCaller)
 
-		var sprintNode = func(node *callgraph.Node) *dotNode {
+		var sprintNode = func(node *callgraph.Node, isCaller bool) *dotNode {
 			// only once
-			key := node.Func.String()
+			key         := node.Func.String()
+			nodeTooltip := ""
+
+			fileCaller  := fmt.Sprintf("%s:%d", filepath.Base(posCaller.Filename), posCaller.Line)
+			fileCallee  := fmt.Sprintf("%s:%d", filepath.Base(posCallee.Filename), posCallee.Line)
+
+			if isCaller {
+				nodeTooltip = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCaller)
+			} else {
+				nodeTooltip = fmt.Sprintf("%s | defined in %s", node.Func.String(), fileCallee)
+			}
+
 			if n, ok := nodeMap[key]; ok {
 				return n
 			}
@@ -306,6 +329,8 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 				c = c.Clusters[key]
 			}
 
+			attrs["tooltip"] = nodeTooltip
+
 			n := &dotNode{
 				ID:    node.Func.String(),
 				Attrs: attrs,
@@ -320,8 +345,8 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 			nodeMap[key] = n
 			return n
 		}
-		callerNode := sprintNode(edge.Caller)
-		calleeNode := sprintNode(edge.Callee)
+		callerNode := sprintNode(edge.Caller, true)
+		calleeNode := sprintNode(edge.Callee, false)
 
 		// edges
 		attrs := make(dotAttrs)
@@ -345,17 +370,36 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 			attrs["color"] = "saddlebrown"
 		}
 
-		e := &dotEdge{
-			From:  callerNode,
-			To:    calleeNode,
-			Attrs: attrs,
-		}
 
-		// omit duplicate calls
+		// use position in file where callee is called as tooltip for the edge
+		fileEdge := fmt.Sprintf(
+			"at %s:%d: calling [%s]",
+			filepath.Base(posEdge.Filename),
+			posEdge.Line,
+			edge.Callee.Func.String(),
+		)
+
+		// omit duplicate calls, except for tooltip enhancements
 		key := fmt.Sprintf("%s = %s => %s", caller.Func, edge.Description(), callee.Func)
 		if _, ok := edgeMap[key]; !ok {
-			edges = append(edges, e)
+			attrs["tooltip"] = fileEdge
+			e := &dotEdge{
+				From:  callerNode,
+				To:    calleeNode,
+				Attrs: attrs,
+			}
 			edgeMap[key] = e
+		} else {
+			// make sure, tooltip is created correctly
+			if _, okk := edgeMap[key].Attrs["tooltip"]; !okk {
+				edgeMap[key].Attrs["tooltip"] = fileEdge
+			} else {
+				edgeMap[key].Attrs["tooltip"] = fmt.Sprintf(
+					"%s\n%s",
+					edgeMap[key].Attrs["tooltip"],
+					fileEdge,
+				)
+			}
 		}
 
 		return nil
@@ -363,6 +407,17 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 	if err != nil {
 		return nil, err
 	}
+
+	// get edges form edgeMap
+	for _, e := range edgeMap {
+		e.From.Attrs["tooltip"] = fmt.Sprintf(
+			"%s\n%s",
+			e.From.Attrs["tooltip"],
+			e.Attrs["tooltip"],
+		)
+		edges = append(edges, e)
+	}
+
 
 	logf("%d/%d edges", len(edges), count)
 
@@ -379,7 +434,7 @@ func printOutput(prog *ssa.Program, mainPkg *types.Package, cg *callgraph.Graph,
 	}
 
 	var buf bytes.Buffer
-	if err := WriteDot(&buf, dot); err != nil {
+	if err := dot.WriteDot(&buf); err != nil {
 		return nil, err
 	}
 
