@@ -109,7 +109,7 @@ const tmplGraph = `digraph gocallvis {
     pad="0.0";
     nodesep="{{.Options.nodesep}}";
 
-    node [shape="ellipse" style="filled" fillcolor="honeydew" fontname="Verdana" penwidth="1.0" margin="0.05,0.0"];
+    node [shape="#nodeShape#" style="#nodeStyle#" fillcolor="honeydew" fontname="Verdana" penwidth="1.0" margin="0.05,0.0"];
     edge [minlen="{{.Options.minlen}}"]
 
     {{template "cluster" .Cluster}}
@@ -189,7 +189,9 @@ type dotGraph struct {
 
 func (g *dotGraph) WriteDot(w io.Writer) error {
 	t := template.New("dot")
-	for _, s := range []string{tmplCluster, tmplNode, tmplEdge, tmplGraph} {
+	tmplGraphStyled := strings.Replace(tmplGraph, "#nodeShape#", *nodeShape, -1)
+	tmplGraphStyled = strings.Replace(tmplGraphStyled, "#nodeStyle#", *nodeStyle, -1)
+	for _, s := range []string{tmplCluster, tmplNode, tmplEdge, tmplGraphStyled} {
 		if _, err := t.Parse(s); err != nil {
 			return err
 		}

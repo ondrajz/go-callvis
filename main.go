@@ -40,6 +40,8 @@ var (
 	nointerFlag  = flag.Bool("nointer", false, "Omit calls to unexported functions.")
 	testFlag     = flag.Bool("tests", false, "Include test code.")
 	graphvizFlag = flag.Bool("graphviz", false, "Use Graphviz's dot program to render images.")
+	nodeShape    = flag.String("nodeshape", "box", "graph node shape (see graphvis manpage for valid values)")
+	nodeStyle    = flag.String("nodestyle", "filled,rounded", "graph node style (see graphvis manpage for valid values)")
 	httpFlag     = flag.String("http", ":7878", "HTTP service address.")
 	skipBrowser  = flag.Bool("skipbrowser", false, "Skip opening browser.")
 	outputFile   = flag.String("file", "", "output filename - omit to use server mode")
