@@ -37,6 +37,8 @@ var (
 	skipBrowser  = flag.Bool("skipbrowser", false, "Skip opening browser.")
 	outputFile   = flag.String("file", "", "output filename - omit to use server mode")
 	outputFormat = flag.String("format", "svg", "output file format [svg | png | jpg | ...]")
+	nodeShape = flag.String("nodeshape", "box", "graph node shape (see graphvis manpage for valid values)")
+	nodeStyle = flag.String("nodestyle", "filled,rounded", "graph node style (see graphvis manpage for valid values)")
 )
 
 func init() {
