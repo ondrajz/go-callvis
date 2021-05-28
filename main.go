@@ -55,6 +55,7 @@ func init() {
 	// Graphviz options
 	flag.UintVar(&minlen, "minlen", 2, "Minimum edge length (for wider output).")
 	flag.Float64Var(&nodesep, "nodesep", 0.35, "Minimum space between two adjacent nodes in the same rank (for taller output).")
+	flag.StringVar(&rankdir, "rankdir", "LR", "Direction of graph layout [LR | RL | TB | BT]")
 }
 
 func logf(f string, a ...interface{}) {

@@ -137,6 +137,8 @@ Usage of go-callvis:
     	Omit calls to unexported functions.
   -nostd
     	Omit calls to/from packages in standard library.
+  -rankdir
+        Direction of graph layout [LR | RL | TB | BT] (default "LR")
   -skipbrowser
     	Skip opening browser.
   -tags build tags

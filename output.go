@@ -370,7 +370,6 @@ func printOutput(
 			attrs["color"] = "saddlebrown"
 		}
 
-
 		// use position in file where callee is called as tooltip for the edge
 		fileEdge := fmt.Sprintf(
 			"at %s:%d: calling [%s]",
@@ -418,7 +417,6 @@ func printOutput(
 		edges = append(edges, e)
 	}
 
-
 	logf("%d/%d edges", len(edges), count)
 
 	dot := &dotGraph{
@@ -430,6 +428,7 @@ func printOutput(
 		Options: map[string]string{
 			"minlen":  fmt.Sprint(minlen),
 			"nodesep": fmt.Sprint(nodesep),
+			"rankdir": fmt.Sprint(rankdir),
 		},
 	}
 
