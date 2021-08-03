@@ -17,6 +17,8 @@ import (
 var (
 	minlen  uint
 	nodesep float64
+	nodeshape string
+	nodestyle string
 )
 
 // location of dot executable for converting from .dot to .svg
@@ -109,7 +111,7 @@ const tmplGraph = `digraph gocallvis {
     pad="0.0";
     nodesep="{{.Options.nodesep}}";
 
-    node [shape="#nodeShape#" style="#nodeStyle#" fillcolor="honeydew" fontname="Verdana" penwidth="1.0" margin="0.05,0.0"];
+    node [shape="{{.Options.nodeshape}}" style="{{.Options.nodestyle}}" fillcolor="honeydew" fontname="Verdana" penwidth="1.0" margin="0.05,0.0"];
     edge [minlen="{{.Options.minlen}}"]
 
     {{template "cluster" .Cluster}}
@@ -189,9 +191,7 @@ type dotGraph struct {
 
 func (g *dotGraph) WriteDot(w io.Writer) error {
 	t := template.New("dot")
-	tmplGraphStyled := strings.Replace(tmplGraph, "#nodeShape#", *nodeShape, -1)
-	tmplGraphStyled = strings.Replace(tmplGraphStyled, "#nodeStyle#", *nodeStyle, -1)
-	for _, s := range []string{tmplCluster, tmplNode, tmplEdge, tmplGraphStyled} {
+	for _, s := range []string{tmplCluster, tmplNode, tmplEdge, tmplGraph} {
 		if _, err := t.Parse(s); err != nil {
 			return err
 		}

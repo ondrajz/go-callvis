@@ -430,6 +430,8 @@ func printOutput(
 		Options: map[string]string{
 			"minlen":  fmt.Sprint(minlen),
 			"nodesep": fmt.Sprint(nodesep),
+			"nodeshape": fmt.Sprint(nodeshape),
+			"nodestyle": fmt.Sprint(nodestyle),
 		},
 	}
 

@@ -40,8 +40,6 @@ var (
 	nointerFlag  = flag.Bool("nointer", false, "Omit calls to unexported functions.")
 	testFlag     = flag.Bool("tests", false, "Include test code.")
 	graphvizFlag = flag.Bool("graphviz", false, "Use Graphviz's dot program to render images.")
-	nodeShape    = flag.String("nodeshape", "box", "graph node shape (see graphvis manpage for valid values)")
-	nodeStyle    = flag.String("nodestyle", "filled,rounded", "graph node style (see graphvis manpage for valid values)")
 	httpFlag     = flag.String("http", ":7878", "HTTP service address.")
 	skipBrowser  = flag.Bool("skipbrowser", false, "Skip opening browser.")
 	outputFile   = flag.String("file", "", "output filename - omit to use server mode")
@@ -57,6 +55,8 @@ func init() {
 	// Graphviz options
 	flag.UintVar(&minlen, "minlen", 2, "Minimum edge length (for wider output).")
 	flag.Float64Var(&nodesep, "nodesep", 0.35, "Minimum space between two adjacent nodes in the same rank (for taller output).")
+	flag.StringVar(&nodeshape, "nodeshape", "box", "graph node shape (see graphvis manpage for valid values)")
+	flag.StringVar(&nodestyle, "nodestyle", "filled,rounded", "graph node style (see graphvis manpage for valid values)")
 }
 
 func logf(f string, a ...interface{}) {
@@ -133,10 +133,10 @@ func main() {
 		os.Exit(2)
 	}
 
-	args     := flag.Args()
-	tests    := *testFlag
+	args := flag.Args()
+	tests := *testFlag
 	httpAddr := *httpFlag
-	urlAddr  := parseHTTPAddr(httpAddr)
+	urlAddr := parseHTTPAddr(httpAddr)
 
 	Analysis = new(analysis)
 	if err := Analysis.DoAnalysis("", tests, args); err != nil {
