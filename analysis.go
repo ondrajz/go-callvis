@@ -3,13 +3,14 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
+	"go/build"
 	"go/types"
-	"os"
-	"strings"
-	"net/http"
-	"path/filepath"
+	"io"
 	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/pointer"
@@ -65,6 +66,7 @@ func (a *analysis) DoAnalysis(
 		Mode:  packages.LoadAllSyntax,
 		Tests: tests,
 		Dir:   dir,
+		BuildFlags: build.Default.BuildTags,
 	}
 
 	initial, err := packages.Load(cfg, args...)

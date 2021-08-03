@@ -19,6 +19,7 @@ var (
 	nodesep float64
 	nodeshape string
 	nodestyle string
+	rankdir string
 )
 
 // location of dot executable for converting from .dot to .svg
@@ -104,7 +105,7 @@ const tmplGraph = `digraph gocallvis {
     labeljust="l";
     fontname="Arial";
     fontsize="14";
-    rankdir="LR";
+    rankdir="{{.Options.rankdir}}";
     bgcolor="lightgray";
     style="solid";
     penwidth="0.5";
