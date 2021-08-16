@@ -127,7 +127,7 @@ func main() {
 	}
 
 	if flag.NArg() != 1 {
-		fmt.Fprintf(os.Stderr, Usage)
+		fmt.Fprint(os.Stderr, Usage)
 		flag.PrintDefaults()
 		os.Exit(2)
 	}

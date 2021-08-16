@@ -35,9 +35,10 @@ func printOutput(
 ) ([]byte, error) {
 	var groupType, groupPkg bool
 	for _, g := range groupBy {
-		if g == "pkg" {
+		switch g {
+		case "pkg":
 			groupPkg = true
-		} else if g == "type" {
+		case "type":
 			groupType = true
 		}
 	}
@@ -285,7 +286,7 @@ func printOutput(
 						Attrs: dotAttrs{
 							"penwidth":  "0.8",
 							"fontsize":  "16",
-							"label":     fmt.Sprintf("%s", label),
+							"label":     label,
 							"style":     "filled",
 							"fillcolor": "lightyellow",
 							"URL":       fmt.Sprintf("/?f=%s", key),
