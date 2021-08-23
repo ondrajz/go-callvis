@@ -21,6 +21,9 @@ export GO111MODULE=on
 install:
 	go install -tags $(GO_BUILD_TAGS) -ldflags $(GO_LDFLAGS)
 
+all:
+	go build -tags $(GO_BUILD_TAGS) -ldflags $(GO_LDFLAGS)
+
 $(BUILD_DIR)/$(PROJECT): $(BUILD_DIR)/$(PROJECT)-$(GOOS)-$(GOARCH)
 	cp $(BUILD_DIR)/$(PROJECT)-$(GOOS)-$(GOARCH) $@
 
