@@ -45,7 +45,7 @@ var (
 	outputFile    = flag.String("file", "", "output filename - omit to use server mode")
 	outputFormat  = flag.String("format", "svg", "output file format [svg | png | jpg | ...]")
 	cacheDir      = flag.String("cacheDir", "", "Enable caching to avoid unnecessary re-rendering, you can force rendering by adding 'refresh=true' to the URL query or emptying the cache directory")
-	callgraphAlgo = flag.String("algo", CallGraphTypePointer, fmt.Sprintf("The algorithm used to construct the call graph. Possible values inlcude: %q, %q, %q, %q, %q",
+	callgraphAlgo = flag.String("algo", CallGraphTypePointer, fmt.Sprintf("The algorithm used to construct the call graph. Possible values inlcude: %q, %q, %q, %q",
 		CallGraphTypeStatic, CallGraphTypeCha, CallGraphTypeRta, CallGraphTypePointer))
 
 	debugFlag   = flag.Bool("debug", false, "Enable verbose log.")
