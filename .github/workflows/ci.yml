@@ -32,8 +32,8 @@ jobs:
 
       - name: Check go.mod
         run: |
-        go mod tidy -v
-        git diff --name-only --exit-code go.mod || ( git diff && echo "Run go tidy to update go.mod" && false )
+          go mod tidy -v
+          git diff --name-only --exit-code go.mod || ( git diff && echo "Run go tidy to update go.mod" && false )
 
       - name: Build All
         run: make build
