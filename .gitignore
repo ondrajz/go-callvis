@@ -27,5 +27,5 @@ _testmain.go
 *.out
 
 # Builds
-build/
+/.build/
 go-callvis
