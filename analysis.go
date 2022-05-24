@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"go/build"
 	"go/types"
+	"golang.org/x/tools/go/callgraph"
+	"golang.org/x/tools/go/callgraph/cha"
+	"golang.org/x/tools/go/callgraph/rta"
+	"golang.org/x/tools/go/callgraph/static"
 	"io"
 	"log"
 	"net/http"
@@ -18,6 +22,15 @@ import (
 	"golang.org/x/tools/go/ssa/ssautil"
 )
 
+type CallGraphType string
+
+const (
+	CallGraphTypeStatic  CallGraphType = "static"
+	CallGraphTypeCha                   = "cha"
+	CallGraphTypeRta                   = "rta"
+	CallGraphTypePointer               = "pointer"
+)
+
 //==[ type def/func: analysis   ]===============================================
 type renderOpts struct {
 	cacheDir string
@@ -29,6 +42,7 @@ type renderOpts struct {
 	nointer  bool
 	refresh  bool
 	nostd    bool
+	algo     CallGraphType
 }
 
 // mainPackages returns the main packages to analyze.
@@ -48,24 +62,25 @@ func mainPackages(pkgs []*ssa.Package) ([]*ssa.Package, error) {
 
 //==[ type def/func: analysis   ]===============================================
 type analysis struct {
-	opts   *renderOpts
-	prog   *ssa.Program
-	pkgs   []*ssa.Package
-	mains  []*ssa.Package
-	result *pointer.Result
+	opts      *renderOpts
+	prog      *ssa.Program
+	pkgs      []*ssa.Package
+	mainPkg   *ssa.Package
+	callgraph *callgraph.Graph
 }
 
 var Analysis *analysis
 
 func (a *analysis) DoAnalysis(
+	algo CallGraphType,
 	dir string,
 	tests bool,
 	args []string,
 ) error {
 	cfg := &packages.Config{
-		Mode:  packages.LoadAllSyntax,
-		Tests: tests,
-		Dir:   dir,
+		Mode:       packages.LoadAllSyntax,
+		Tests:      tests,
+		Dir:        dir,
 		BuildFlags: build.Default.BuildTags,
 	}
 
@@ -82,26 +97,50 @@ func (a *analysis) DoAnalysis(
 	prog, pkgs := ssautil.AllPackages(initial, 0)
 	prog.Build()
 
-	mains, err := mainPackages(pkgs)
-	if err != nil {
-		return err
+	var graph *callgraph.Graph
+	var mainPkg *ssa.Package
+
+	switch algo {
+	case CallGraphTypeStatic:
+		graph = static.CallGraph(prog)
+	case CallGraphTypeCha:
+		graph = cha.CallGraph(prog)
+	case CallGraphTypeRta:
+		mains, err := mainPackages(prog.AllPackages())
+		if err != nil {
+			return err
+		}
+		var roots []*ssa.Function
+		mainPkg = mains[0]
+		for _, main := range mains {
+			roots = append(roots, main.Func("main"))
+		}
+		graph = rta.Analyze(roots, true).CallGraph
+	case CallGraphTypePointer:
+		mains, err := mainPackages(prog.AllPackages())
+		if err != nil {
+			return err
+		}
+		mainPkg = mains[0]
+		config := &pointer.Config{
+			Mains:          mains,
+			BuildCallGraph: true,
+		}
+		ptares, err := pointer.Analyze(config)
+		if err != nil {
+			return err
+		}
+		graph = ptares.CallGraph
+	default:
+		return fmt.Errorf("invalid call graph type: %s", a.opts.algo)
 	}
 
-	config := &pointer.Config{
-		Mains:          mains,
-		BuildCallGraph: true,
-	}
-
-	result, err := pointer.Analyze(config)
-	if err != nil {
-		return err // internal error in pointer analysis
-	}
 	//cg.DeleteSyntheticNodes()
 
-	a.prog   = prog
-	a.pkgs   = pkgs
-	a.mains  = mains
-	a.result = result
+	a.prog = prog
+	a.pkgs = pkgs
+	a.mainPkg = mainPkg
+	a.callgraph = graph
 	return nil
 }
 
@@ -119,10 +158,10 @@ func (a *analysis) OptsSetup() {
 }
 
 func (a *analysis) ProcessListArgs() (e error) {
-	var groupBy      []string
-	var ignorePaths  []string
+	var groupBy []string
+	var ignorePaths []string
 	var includePaths []string
-	var limitPaths   []string
+	var limitPaths []string
 
 	for _, g := range strings.Split(a.opts.group[0], ",") {
 		g := strings.TrimSpace(g)
@@ -165,7 +204,7 @@ func (a *analysis) ProcessListArgs() (e error) {
 	return
 }
 
-func (a *analysis) OverrideByHTTP(r *http.Request) () {
+func (a *analysis) OverrideByHTTP(r *http.Request) {
 	if f := r.FormValue("f"); f == "all" {
 		a.opts.focus = ""
 	} else if f != "" {
@@ -235,8 +274,8 @@ func (a *analysis) Render() ([]byte, error) {
 
 	dot, err := printOutput(
 		a.prog,
-		a.mains[0].Pkg,
-		a.result.CallGraph,
+		a.mainPkg,
+		a.callgraph,
 		focusPkg,
 		a.opts.limit,
 		a.opts.ignore,
