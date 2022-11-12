@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://github.com/ofabry/go-callvis/releases"><img src="https://img.shields.io/github/release/ofabry/go-callvis.svg" alt="Github release"></a>
   <a href="https://travis-ci.org/ofabry/go-callvis"><img src="https://travis-ci.org/ofabry/go-callvis.svg?branch=master" alt="Build status"></a>
+  <a href="https://github.com/nikolaydubina/go-recipes"><img src="https://raw.githubusercontent.com/nikolaydubina/go-recipes/main/badge.svg?raw=true" alt="go-recipes"></a>
   <a href="https://gophers.slack.com/archives/go-callvis"><img src="https://img.shields.io/badge/gophers%20slack-%23go--callvis-ff69b4.svg" alt="Slack channel"></a>
 </p>
 
