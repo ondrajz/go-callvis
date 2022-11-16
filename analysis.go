@@ -77,7 +77,6 @@ func (a *analysis) DoAnalysis(
 	tests bool,
 	args []string,
 ) error {
-	buildFlagTags := getBuildFlagTags()
 	cfg := &packages.Config{
 		Mode:       packages.LoadAllSyntax,
 		Tests:      tests,
