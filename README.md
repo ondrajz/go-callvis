@@ -81,7 +81,7 @@ Here you can find descriptions for various types of output.
 ### Installation
 
 ```sh
-go install github.com/ofabry/go-callvis
+go install github.com/ofabry/go-callvis@latest
 # or
 git clone https://github.com/ofabry/go-callvis.git
 cd go-callvis && make install
