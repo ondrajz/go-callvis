@@ -21,12 +21,12 @@ the code much higher or when you are just simply trying to understand code of so
 
 ### Features
 
-- 🆕 **support for Go modules!** :boom:
-- focus specific package in the program
 - click on package to quickly switch the focus using [interactive viewer](#interactive-viewer)
-- group functions by package and/or methods by type
+- focus specific package in the program
+- group functions by package
+- group methods by their receiver type
 - filter packages to specific import path prefixes
-- ignore funcs from standard library
+- ignore calls to/from standard library
 - omit various types of function calls
 
 ### Output preview
@@ -40,52 +40,34 @@ the code much higher or when you are just simply trying to understand code of so
 It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and 
 uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with Graphviz tools.
 
-## Reference guide
-
-Here you can find descriptions for various types of output.
-
-### Packages / Types
-
-|Represents  | Style|
-|----------: | :-------------|
-|`focused`   | **blue** color|
-|`stdlib`    | **green** color|
-|`other`     | **yellow** color|
-
-### Functions / Methods
-
-|Represents   | Style|
-|-----------: | :--------------|
-|`exported`   | **bold** border|
-|`unexported` | **normal** border|
-|`anonymous`  | **dotted** border|
-
-### Calls
-
-|Represents   | Style|
-|-----------: | :-------------|
-|`internal`   | **black** color|
-|`external`   | **brown** color|
-|`static`     | **solid** line|
-|`dynamic`    | **dashed** line|
-|`regular`    | **simple** arrow|
-|`concurrent` | arrow with **circle**|
-|`deferred`   | arrow with **diamond**|
-
 ## Quick start
-
-#### Requirements
-
-- [Go](https://golang.org/dl/) 1.17+
-- [Graphviz](http://www.graphviz.org/download/) (optional, required only with `-graphviz` flag)
 
 ### Installation
 
+#### Requirements
+
+- [Go](https://golang.org/dl/) 1.19+
+- [Graphviz](http://www.graphviz.org/download/) (optional, required only with `-graphviz` flag)
+
+To install go-callvis, run:
+
 ```sh
+# Latest release
 go install github.com/ofabry/go-callvis@latest
-# or
+
+# Development version
+go install github.com/ofabry/go-callvis@master
+```
+
+Alternatively, clone the repository and compile the source code:
+
+```sh
+# Clone repository
 git clone https://github.com/ofabry/go-callvis.git
-cd go-callvis && make install
+cd go-callvis
+
+# Compile and install
+make install
 ```
 
 ### Usage
@@ -151,6 +133,38 @@ Usage of go-callvis:
 ```
 
 Run `go-callvis -h` to list all supported options.
+
+## Reference guide
+
+Here you can find descriptions for various types of output.
+
+### Packages / Types
+
+|Represents  | Style|
+|----------: | :-------------|
+|`focused`   | **blue** color|
+|`stdlib`    | **green** color|
+|`other`     | **yellow** color|
+
+### Functions / Methods
+
+|Represents   | Style|
+|-----------: | :--------------|
+|`exported`   | **bold** border|
+|`unexported` | **normal** border|
+|`anonymous`  | **dotted** border|
+
+### Calls
+
+|Represents   | Style|
+|-----------: | :-------------|
+|`internal`   | **black** color|
+|`external`   | **brown** color|
+|`static`     | **solid** line|
+|`dynamic`    | **dashed** line|
+|`regular`    | **simple** arrow|
+|`concurrent` | arrow with **circle**|
+|`deferred`   | arrow with **diamond**|
 
 ## Examples
 
