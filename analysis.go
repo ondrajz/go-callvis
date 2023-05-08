@@ -81,7 +81,7 @@ func (a *analysis) DoAnalysis(
 		Mode:       packages.LoadAllSyntax,
 		Tests:      tests,
 		Dir:        dir,
-		BuildFlags: build.Default.BuildTags,
+		BuildFlags: getBuildFlags(),
 	}
 
 	initial, err := packages.Load(cfg, args...)
@@ -374,4 +374,21 @@ func copyFile(src, dst string) (int64, error) {
 	defer destination.Close()
 	nBytes, err := io.Copy(destination, source)
 	return nBytes, err
+}
+
+func getBuildFlags() []string {
+	buildFlagTags := getBuildFlagTags(build.Default.BuildTags)
+	if len(buildFlagTags) == 0 {
+		return nil
+	}
+
+	return []string{buildFlagTags}
+}
+
+func getBuildFlagTags(buildTags []string) string {
+	if len(buildTags) > 0 {
+		return "-tags=" + strings.Join(buildTags, ",")
+	}
+
+	return ""
 }
