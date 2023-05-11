@@ -90,12 +90,14 @@ The output format defaults to `svg`, use option `-format=<svg|png|jpg|...>` to p
 
 ```
 Usage of go-callvis:
+  -algo string
+    	The algorithm used to construct the call graph. Possible values inlcude: "static", "cha", "rta", "pointer" (default "pointer")
   -debug
     	Enable verbose log.
   -file string
     	output filename - omit to use server mode
   -cacheDir string
-    	Enable caching to avoid unnecessary re-rendering.
+    	Enable caching to avoid unnecessary re-rendering, you can force rendering by adding 'refresh=true' to the URL query or emptying the cache directory
   -focus string
     	Focus specific package using name or import path. (default "main")
   -format string
@@ -116,11 +118,15 @@ Usage of go-callvis:
     	Minimum edge length (for wider output). (default 2)
   -nodesep float
     	Minimum space between two adjacent nodes in the same rank (for taller output). (default 0.35)
+  -nodeshape string
+    	graph node shape (see graphvis manpage for valid values) (default "box")
+  -nodestyle string
+    	graph node style (see graphvis manpage for valid values) (default "filled,rounded")
   -nointer
     	Omit calls to unexported functions.
   -nostd
     	Omit calls to/from packages in standard library.
-  -rankdir
+  -rankdir string
         Direction of graph layout [LR | RL | TB | BT] (default "LR")
   -skipbrowser
     	Skip opening browser.
