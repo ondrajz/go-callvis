@@ -6,7 +6,6 @@ require (
 	github.com/goccy/go-graphviz v0.1.3
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	golang.org/x/tools v0.22.0
-	golang.org/x/tools/go/pointer v0.1.0-deprecated
 )
 
 require (
