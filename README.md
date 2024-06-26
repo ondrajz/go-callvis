@@ -1,3 +1,5 @@
+# README
+
 <p align="center"><img src="images/gopher.png" alt="gopher"></p>
 
 <h1 align="center">go-callvis</h1>
@@ -9,14 +11,14 @@
   <a href="https://gophers.slack.com/archives/go-callvis"><img src="https://img.shields.io/badge/gophers%20slack-%23go--callvis-ff69b4.svg" alt="Slack channel"></a>
 </p>
 
-<p align="center"><b>go-callvis</b> is a development tool to help visualize call graph of a Go program using interactive view.</p>
+<p align="center">**go-callvis** is a development tool to help visualize call graph of a Go program using interactive view.</p>
 
 ---
 
 ## Introduction
 
-The purpose of this tool is to provide developers with a visual overview of a Go program using data from call graph 
-and its relations with packages and types. This is especially useful in larger projects where the complexity of 
+The purpose of this tool is to provide developers with a visual overview of a Go program using data from call graph
+and its relations with packages and types. This is especially useful in larger projects where the complexity of
 the code much higher or when you are just simply trying to understand code of somebody else.
 
 ### Features
@@ -37,7 +39,7 @@ the code much higher or when you are just simply trying to understand code of so
 
 ### How it works
 
-It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and 
+It runs [pointer analysis](https://godoc.org/golang.org/x/tools/go/pointer) to construct the call graph of the program and
 uses the data to generate output in [dot format](http://www.graphviz.org/content/dot-language), which can be rendered with Graphviz tools.
 
 ## Quick start
@@ -76,7 +78,7 @@ make install
 
 To use the interactive view provided by a web server that serves SVG images of focused packages, you can simply run:
 
-`go-callvis <target package>` 
+`go-callvis <target package>`
 
 HTTP server is listening on [http://localhost:7878/](http://localhost:7878/) by default, use option `-http="ADDR:PORT"` to change HTTP server address.
 
@@ -88,48 +90,50 @@ The output format defaults to `svg`, use option `-format=<svg|png|jpg|...>` to p
 
 #### Options
 
-```
+```sh
 Usage of go-callvis:
   -debug
-    	Enable verbose log.
+    Enable verbose log.
   -file string
-    	output filename - omit to use server mode
+    output filename - omit to use server mode
   -cacheDir string
-    	Enable caching to avoid unnecessary re-rendering.
+    Enable caching to avoid unnecessary re-rendering.
   -focus string
-    	Focus specific package using name or import path. (default "main")
+    Focus specific package using name or import path. (default "main")
   -format string
-    	output file format [svg | png | jpg | ...] (default "svg")
+    output file format [svg | png | jpg | ...] (default "svg")
   -graphviz
-    	Use Graphviz's dot program to render images.
+    Use Graphviz's dot program to render images.
   -group string
-    	Grouping functions by packages and/or types [pkg, type] (separated by comma) (default "pkg")
+    Grouping functions by packages and/or types [pkg, type] (separated by comma) (default "pkg")
   -http string
-    	HTTP service address. (default ":7878")
+    HTTP service address. (default ":7878")
   -ignore string
-    	Ignore package paths containing given prefixes (separated by comma)
+    Ignore package paths containing given prefixes (separated by comma)
   -include string
-    	Include package paths with given prefixes (separated by comma)
+    Include package paths with given prefixes (separated by comma)
   -limit string
-    	Limit package paths to given prefixes (separated by comma)
+    Limit package paths to given prefixes (separated by comma)
   -minlen uint
-    	Minimum edge length (for wider output). (default 2)
+    Minimum edge length (for wider output). (default 2)
   -nodesep float
-    	Minimum space between two adjacent nodes in the same rank (for taller output). (default 0.35)
+    Minimum space between two adjacent nodes in the same rank (for taller output). (default 0.35)
   -nointer
-    	Omit calls to unexported functions.
+    Omit calls to unexported functions.
   -nostd
-    	Omit calls to/from packages in standard library.
+    Omit calls to/from packages in standard library.
   -rankdir
-        Direction of graph layout [LR | RL | TB | BT] (default "LR")
+    Direction of graph layout [LR | RL | TB | BT] (default "LR")
   -skipbrowser
-    	Skip opening browser.
+    Skip opening browser.
   -tags build tags
-    	a list of build tags to consider satisfied during the build. For more information about build tags, see the description of build constraints in the documentation for the go/build package
+    a list of build tags to consider satisfied during the build. For more information about build tags, see the description of build constraints in the documentation for the go/build package
   -tests
-    	Include test code.
+    Include test code.
+  -algo string
+        Use specific algorithm for package analyzer: static, cha or rta (default "static")      
   -version
-    	Show version and exit.
+    Show version and exit.
 ```
 
 Run `go-callvis -h` to list all supported options.
@@ -181,15 +185,17 @@ Join [#go-callvis](https://gophers.slack.com/archives/go-callvis) channel at [go
 ### How to help
 
 Did you find any bugs or have some suggestions?
+
 - Feel free to open [new issue](https://github.com/ofabry/go-callvis/issues/new) or start discussion in the slack channel.
 
 Do you want to contribute to the project?
+
 - Fork the repository and open a pull request. [Here](https://github.com/ofabry/go-callvis/projects/1) you can find TODO features.
 
 ---
 
 #### Roadmap
 
-##### The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/ofabry/goexplorer)!
+##### The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/ofabry/goexplorer)
 
 > Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
