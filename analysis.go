@@ -216,7 +216,7 @@ func (a *analysis) OverrideByHTTP(r *http.Request) {
 	if inc := r.FormValue("include"); inc != "" {
 		a.opts.include[0] = inc
 	}
-	return
+	//return
 }
 
 // basically do printOutput() with previously checking
