@@ -5,10 +5,6 @@ import (
 	"fmt"
 	"go/build"
 	"go/types"
-	"golang.org/x/tools/go/callgraph"
-	"golang.org/x/tools/go/callgraph/cha"
-	"golang.org/x/tools/go/callgraph/rta"
-	"golang.org/x/tools/go/callgraph/static"
 	"io"
 	"log"
 	"net/http"
@@ -16,8 +12,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/tools/go/callgraph"
+	"golang.org/x/tools/go/callgraph/cha"
+	"golang.org/x/tools/go/callgraph/rta"
+	"golang.org/x/tools/go/callgraph/static"
+
 	"golang.org/x/tools/go/packages"
-	"golang.org/x/tools/go/pointer"
+
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/ssa/ssautil"
 )
@@ -25,13 +26,12 @@ import (
 type CallGraphType string
 
 const (
-	CallGraphTypeStatic  CallGraphType = "static"
-	CallGraphTypeCha                   = "cha"
-	CallGraphTypeRta                   = "rta"
-	CallGraphTypePointer               = "pointer"
+	CallGraphTypeStatic CallGraphType = "static"
+	CallGraphTypeCha    CallGraphType = "cha"
+	CallGraphTypeRta    CallGraphType = "rta"
 )
 
-//==[ type def/func: analysis   ]===============================================
+// ==[ type def/func: analysis   ]===============================================
 type renderOpts struct {
 	cacheDir string
 	focus    string
@@ -60,7 +60,7 @@ func mainPackages(pkgs []*ssa.Package) ([]*ssa.Package, error) {
 	return mains, nil
 }
 
-//==[ type def/func: analysis   ]===============================================
+// ==[ type def/func: analysis   ]===============================================
 type analysis struct {
 	opts      *renderOpts
 	prog      *ssa.Program
@@ -116,21 +116,6 @@ func (a *analysis) DoAnalysis(
 			roots = append(roots, main.Func("main"))
 		}
 		graph = rta.Analyze(roots, true).CallGraph
-	case CallGraphTypePointer:
-		mains, err := mainPackages(prog.AllPackages())
-		if err != nil {
-			return err
-		}
-		mainPkg = mains[0]
-		config := &pointer.Config{
-			Mains:          mains,
-			BuildCallGraph: true,
-		}
-		ptares, err := pointer.Analyze(config)
-		if err != nil {
-			return err
-		}
-		graph = ptares.CallGraph
 	default:
 		return fmt.Errorf("invalid call graph type: %s", a.opts.algo)
 	}
@@ -231,7 +216,7 @@ func (a *analysis) OverrideByHTTP(r *http.Request) {
 	if inc := r.FormValue("include"); inc != "" {
 		a.opts.include[0] = inc
 	}
-	return
+	//return
 }
 
 // basically do printOutput() with previously checking

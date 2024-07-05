@@ -1,12 +1,10 @@
 // go-callvis: a tool to help visualize the call graph of a Go program.
-//
 package main
 
 import (
 	"flag"
 	"fmt"
 	"go/build"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -40,13 +38,13 @@ var (
 	nointerFlag   = flag.Bool("nointer", false, "Omit calls to unexported functions.")
 	testFlag      = flag.Bool("tests", false, "Include test code.")
 	graphvizFlag  = flag.Bool("graphviz", false, "Use Graphviz's dot program to render images.")
-	httpFlag      = flag.String("http", ":7878", "HTTP service address.")
+	httpFlag      = flag.String("http", "localhost:7878", "HTTP service address.")
 	skipBrowser   = flag.Bool("skipbrowser", false, "Skip opening browser.")
 	outputFile    = flag.String("file", "", "output filename - omit to use server mode")
 	outputFormat  = flag.String("format", "svg", "output file format [svg | png | jpg | ...]")
 	cacheDir      = flag.String("cacheDir", "", "Enable caching to avoid unnecessary re-rendering, you can force rendering by adding 'refresh=true' to the URL query or emptying the cache directory")
-	callgraphAlgo = flag.String("algo", CallGraphTypePointer, fmt.Sprintf("The algorithm used to construct the call graph. Possible values inlcude: %q, %q, %q, %q",
-		CallGraphTypeStatic, CallGraphTypeCha, CallGraphTypeRta, CallGraphTypePointer))
+	callgraphAlgo = flag.String("algo", string(CallGraphTypeStatic), fmt.Sprintf("The algorithm used to construct the call graph. Possible values inlcude: %q, %q, %q",
+		CallGraphTypeStatic, CallGraphTypeCha, CallGraphTypeRta))
 
 	debugFlag   = flag.Bool("debug", false, "Enable verbose log.")
 	versionFlag = flag.Bool("version", false, "Show version and exit.")
@@ -69,12 +67,15 @@ func logf(f string, a ...interface{}) {
 }
 
 func parseHTTPAddr(addr string) string {
-	host, port, _ := net.SplitHostPort(addr)
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		log.Fatalf("%v\n", err)
+	}
 	if host == "" {
 		host = "localhost"
 	}
 	if port == "" {
-		port = "80"
+		port = "7878"
 	}
 	u := url.URL{
 		Scheme: "http",
@@ -84,7 +85,7 @@ func parseHTTPAddr(addr string) string {
 }
 
 func openBrowser(url string) {
-	time.Sleep(time.Millisecond * 100)
+	time.Sleep(100 * time.Millisecond) // 100 ms
 	if err := browser.OpenURL(url); err != nil {
 		log.Printf("OpenURL error: %v", err)
 	}
@@ -105,7 +106,7 @@ func outputDot(fname string, outputFormat string) {
 
 	log.Println("writing dot output..")
 
-	writeErr := ioutil.WriteFile(fmt.Sprintf("%s.gv", fname), output, 0755)
+	writeErr := os.WriteFile(fmt.Sprintf("%s.gv", fname), output, 0755)
 	if writeErr != nil {
 		log.Fatalf("%v\n", writeErr)
 	}
@@ -118,7 +119,7 @@ func outputDot(fname string, outputFormat string) {
 	}
 }
 
-//noinspection GoUnhandledErrorResult
+// noinspection GoUnhandledErrorResult
 func main() {
 	flag.Parse()
 
