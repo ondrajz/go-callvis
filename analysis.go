@@ -60,6 +60,26 @@ func mainPackages(pkgs []*ssa.Package) ([]*ssa.Package, error) {
 	return mains, nil
 }
 
+// initFuncs returns all package init functions
+func initFuncs(pkgs []*ssa.Package) ([]*ssa.Function, error) {
+	var inits []*ssa.Function
+	for _, p := range pkgs {
+		if p == nil {
+			continue
+		}
+		for name, member := range p.Members {
+			fun, ok := member.(*ssa.Function)
+			if !ok {
+				continue
+			}
+			if name == "init" || strings.HasPrefix(name, "init#") {
+				inits = append(inits, fun)
+			}
+		}
+	}
+	return inits, nil
+}
+
 //==[ type def/func: analysis   ]===============================================
 type analysis struct {
 	opts      *renderOpts
@@ -119,6 +139,15 @@ func (a *analysis) DoAnalysis(
 		for _, main := range mains {
 			roots = append(roots, main.Func("main"))
 		}
+		
+		inits, err := initFuncs(prog.AllPackages())
+		if err != nil {
+			return err
+		}
+		for _, init := range inits {
+			roots = append(roots, init)
+		}
+
 		graph = rta.Analyze(roots, true).CallGraph
 	case CallGraphTypePointer:
 		mains, err := mainPackages(prog.AllPackages())
