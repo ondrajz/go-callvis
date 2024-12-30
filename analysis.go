@@ -114,7 +114,11 @@ func (a *analysis) DoAnalysis(
 	}
 
 	// Create and build SSA-form program representation.
-	prog, pkgs := ssautil.AllPackages(initial, 0)
+	mode := ssa.BuilderMode(0)
+	if algo == CallGraphTypeRta {
+		mode = ssa.InstantiateGenerics
+	}
+	prog, pkgs := ssautil.AllPackages(initial, mode)
 	prog.Build()
 
 	var graph *callgraph.Graph
