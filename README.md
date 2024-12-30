@@ -128,6 +128,8 @@ Usage of go-callvis:
     	a list of build tags to consider satisfied during the build. For more information about build tags, see the description of build constraints in the documentation for the go/build package
   -tests
     	Include test code.
+  -algo string
+        Use specific algorithm for package analyzer: static, cha or rta (default "static")
   -version
     	Show version and exit.
 ```

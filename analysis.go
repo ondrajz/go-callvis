@@ -17,7 +17,6 @@ import (
 	"strings"
 
 	"golang.org/x/tools/go/packages"
-	"golang.org/x/tools/go/pointer"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/ssa/ssautil"
 )
@@ -25,10 +24,9 @@ import (
 type CallGraphType string
 
 const (
-	CallGraphTypeStatic  CallGraphType = "static"
-	CallGraphTypeCha                   = "cha"
-	CallGraphTypeRta                   = "rta"
-	CallGraphTypePointer               = "pointer"
+	CallGraphTypeStatic CallGraphType = "static"
+	CallGraphTypeCha    CallGraphType = "cha"
+	CallGraphTypeRta    CallGraphType = "rta"
 )
 
 //==[ type def/func: analysis   ]===============================================
@@ -149,21 +147,6 @@ func (a *analysis) DoAnalysis(
 		}
 
 		graph = rta.Analyze(roots, true).CallGraph
-	case CallGraphTypePointer:
-		mains, err := mainPackages(prog.AllPackages())
-		if err != nil {
-			return err
-		}
-		mainPkg = mains[0]
-		config := &pointer.Config{
-			Mains:          mains,
-			BuildCallGraph: true,
-		}
-		ptares, err := pointer.Analyze(config)
-		if err != nil {
-			return err
-		}
-		graph = ptares.CallGraph
 	default:
 		return fmt.Errorf("invalid call graph type: %s", a.opts.algo)
 	}
