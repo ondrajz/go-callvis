@@ -17,8 +17,16 @@ func isSynthetic(edge *callgraph.Edge) bool {
 }
 
 func inStd(node *callgraph.Node) bool {
-	pkg, _ := build.Import(node.Func.Pkg.Pkg.Path(), "", 0)
-	return pkg.Goroot
+	//pkg, _ := build.Import(node.Func.Pkg.Pkg.Path(), "", 0)
+	//return pkg.Goroot
+	return isStdPkgPath(node.Func.Pkg.Pkg.Path())
+}
+
+func isStdPkgPath(path string) bool {
+	if strings.Contains(path, ".") {
+		return false
+	}
+	return true
 }
 
 func printOutput(
@@ -33,6 +41,10 @@ func printOutput(
 	nostd,
 	nointer bool,
 ) ([]byte, error) {
+
+	logf("printing output for: %v", focusPkg)
+	logf("src dirs: %+v, default build context: %+v", build.Default.SrcDirs(), build.Default)
+
 	var groupType, groupPkg bool
 	for _, g := range groupBy {
 		switch g {
@@ -78,17 +90,15 @@ func printOutput(
 			return true
 		}
 		fromFocused := false
-		toFocused := false
 		for _, e := range caller.In {
-			if !isSynthetic(e) && focusPkg != nil &&
-				e.Caller.Func.Pkg.Pkg.Path() == focusPkg.Path() {
+			if !isSynthetic(e) && focusPkg != nil && e.Caller.Func.Pkg.Pkg.Path() == focusPkg.Path() {
 				fromFocused = true
 				break
 			}
 		}
+		toFocused := false
 		for _, e := range callee.Out {
-			if !isSynthetic(e) && focusPkg != nil &&
-				e.Callee.Func.Pkg.Pkg.Path() == focusPkg.Path() {
+			if !isSynthetic(e) && focusPkg != nil && e.Callee.Func.Pkg.Pkg.Path() == focusPkg.Path() {
 				toFocused = true
 				break
 			}
@@ -157,6 +167,8 @@ func printOutput(
 			return nil
 		}
 
+		//logf(" - %s -> %s (%s -> %s) %v\n", caller.Func.Pkg, callee.Func.Pkg, caller, callee, filenameCaller)
+
 		callerPkg := caller.Func.Pkg.Pkg
 		calleePkg := callee.Func.Pkg.Pkg
 
@@ -167,8 +179,7 @@ func printOutput(
 		}
 
 		// omit std
-		if nostd &&
-			(inStd(caller) || inStd(callee)) {
+		if nostd && (inStd(caller) || inStd(callee)) {
 			return nil
 		}
 
@@ -244,11 +255,13 @@ func printOutput(
 				label = parts[len(parts)-1]
 			}
 
-			pkg, _ := build.Import(node.Func.Pkg.Pkg.Path(), "", 0)
+			pkgPath := node.Func.Pkg.Pkg.Path()
+			isStdPkg := isStdPkgPath(pkgPath)
+
 			// set node color
 			if isFocused {
 				attrs["fillcolor"] = "lightblue"
-			} else if pkg.Goroot {
+			} else if isStdPkg {
 				attrs["fillcolor"] = "#adedad"
 			} else {
 				attrs["fillcolor"] = "moccasin"
@@ -275,7 +288,7 @@ func printOutput(
 			// group by pkg
 			if groupPkg && !isFocused {
 				label := node.Func.Pkg.Pkg.Name()
-				if pkg.Goroot {
+				if isStdPkg {
 					label = node.Func.Pkg.Pkg.Path()
 				}
 				key := node.Func.Pkg.Pkg.Path()
@@ -295,7 +308,7 @@ func printOutput(
 							"rank":      "sink",
 						},
 					}
-					if pkg.Goroot {
+					if isStdPkg {
 						c.Clusters[key].Attrs["fillcolor"] = "#E0FFE1"
 					}
 				}
@@ -323,7 +336,7 @@ func printOutput(
 					}
 					if isFocused {
 						c.Clusters[key].Attrs["fillcolor"] = "lightsteelblue"
-					} else if pkg.Goroot {
+					} else if isStdPkg {
 						c.Clusters[key].Attrs["fillcolor"] = "#c2e3c2"
 					}
 				}
