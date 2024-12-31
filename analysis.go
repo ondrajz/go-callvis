@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"go/build"
 	"go/types"
-	"golang.org/x/tools/go/callgraph"
-	"golang.org/x/tools/go/callgraph/cha"
-	"golang.org/x/tools/go/callgraph/rta"
-	"golang.org/x/tools/go/callgraph/static"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/tools/go/callgraph"
+	"golang.org/x/tools/go/callgraph/cha"
+	"golang.org/x/tools/go/callgraph/rta"
+	"golang.org/x/tools/go/callgraph/static"
 
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/ssa"
@@ -29,7 +30,7 @@ const (
 	CallGraphTypeRta    CallGraphType = "rta"
 )
 
-//==[ type def/func: analysis   ]===============================================
+// ==[ type def/func: analysis   ]===============================================
 type renderOpts struct {
 	cacheDir string
 	focus    string
@@ -78,7 +79,7 @@ func initFuncs(pkgs []*ssa.Package) ([]*ssa.Function, error) {
 	return inits, nil
 }
 
-//==[ type def/func: analysis   ]===============================================
+// ==[ type def/func: analysis   ]===============================================
 type analysis struct {
 	opts      *renderOpts
 	prog      *ssa.Program
@@ -112,10 +113,7 @@ func (a *analysis) DoAnalysis(
 	}
 
 	// Create and build SSA-form program representation.
-	mode := ssa.BuilderMode(0)
-	if algo == CallGraphTypeRta {
-		mode = ssa.InstantiateGenerics
-	}
+	mode := ssa.InstantiateGenerics
 	prog, pkgs := ssautil.AllPackages(initial, mode)
 	prog.Build()
 
@@ -137,7 +135,7 @@ func (a *analysis) DoAnalysis(
 		for _, main := range mains {
 			roots = append(roots, main.Func("main"))
 		}
-		
+
 		inits, err := initFuncs(prog.AllPackages())
 		if err != nil {
 			return err
