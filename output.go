@@ -13,7 +13,9 @@ import (
 )
 
 func isSynthetic(edge *callgraph.Edge) bool {
-	return edge.Caller.Func.Pkg == nil || edge.Callee.Func.Synthetic != ""
+	// TODO: consider handling callee.Func.Pkg == nil
+	// this could still generate a node for the call, might be useful
+	return edge.Caller.Func.Pkg == nil || edge.Callee.Func.Pkg == nil || edge.Callee.Func.Synthetic != ""
 }
 
 func inStd(node *callgraph.Node) bool {
