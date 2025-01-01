@@ -38,7 +38,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 build:  ## Build go-callvis
-	go build -tags $(GO_BUILD_TAGS) -ldflags "$(GO_LDFLAGS)" $(GO_BUILD_ARGS)
+	go build -v -tags $(GO_BUILD_TAGS) -ldflags "$(GO_LDFLAGS)" $(GO_BUILD_ARGS)
 
 test:  ## Run unit tests
 	go test -tags $(GO_BUILD_TAGS) -ldflags "$(GO_LDFLAGS)" $(GO_BUILD_ARGS) -short -race ./...

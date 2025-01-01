@@ -433,6 +433,7 @@ func printOutput(
 		edges = append(edges, e)
 	}
 
+	logf("%d/%d nodes", len(nodeMap), len(cg.Nodes))
 	logf("%d/%d edges", len(edges), count)
 
 	title := ""

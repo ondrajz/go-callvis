@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"golang.org/x/tools/go/callgraph"
 	"golang.org/x/tools/go/callgraph/cha"
@@ -96,6 +97,9 @@ func (a *analysis) DoAnalysis(
 	tests bool,
 	args []string,
 ) error {
+	logf("begin analysis")
+	defer logf("analysis done")
+
 	cfg := &packages.Config{
 		Mode:       packages.LoadAllSyntax,
 		Tests:      tests,
@@ -103,19 +107,24 @@ func (a *analysis) DoAnalysis(
 		BuildFlags: getBuildFlags(),
 	}
 
+	logf("loading packages")
+
 	initial, err := packages.Load(cfg, args...)
 	if err != nil {
 		return err
 	}
-
 	if packages.PrintErrors(initial) > 0 {
 		return fmt.Errorf("packages contain errors")
 	}
+
+	logf("loaded %d initial packages, building program", len(initial))
 
 	// Create and build SSA-form program representation.
 	mode := ssa.InstantiateGenerics
 	prog, pkgs := ssautil.AllPackages(initial, mode)
 	prog.Build()
+
+	logf("build done, computing callgraph (algo: %v)", algo)
 
 	var graph *callgraph.Graph
 	var mainPkg *ssa.Package
@@ -149,7 +158,7 @@ func (a *analysis) DoAnalysis(
 		return fmt.Errorf("invalid call graph type: %s", a.opts.algo)
 	}
 
-	//cg.DeleteSyntheticNodes()
+	logf("callgraph resolved with %d nodes", len(graph.Nodes))
 
 	a.prog = prog
 	a.pkgs = pkgs
@@ -257,6 +266,9 @@ func (a *analysis) Render() ([]byte, error) {
 		focusPkg *types.Package
 	)
 
+	start := time.Now()
+	logf("begin rendering")
+
 	if a.opts.focus != "" {
 		if ssaPkg = a.prog.ImportedPackage(a.opts.focus); ssaPkg == nil {
 			if strings.Contains(a.opts.focus, "/") {
@@ -283,7 +295,7 @@ func (a *analysis) Render() ([]byte, error) {
 			}
 		}
 		focusPkg = ssaPkg.Pkg
-		logf("focusing: %v", focusPkg.Path())
+		logf("focusing package: %v (path: %v)", focusPkg.Name(), focusPkg.Path())
 	}
 
 	dot, err := printOutput(
@@ -301,6 +313,8 @@ func (a *analysis) Render() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("processing failed: %v", err)
 	}
+
+	logf("rendering done (took %v sec)", time.Since(start).Round(time.Millisecond).Seconds())
 
 	return dot, nil
 }

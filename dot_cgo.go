@@ -20,9 +20,11 @@ func runDotToImage(outfname string, format string, dot []byte) (string, error) {
     }
     defer func() {
         if err := graph.Close(); err != nil {
-            log.Fatal(err)
+            log.Printf("error closing graph: %v", err)
         }
-        g.Close()
+        if err := g.Close(); err != nil {
+            log.Printf("error closing graphviz: %v", err)
+        }
     }()
     var img string
     if outfname == "" {

@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -102,14 +101,14 @@ func outputDot(fname string, outputFormat string) {
 		log.Fatalf("%v\n", err)
 	}
 
-	log.Println("writing dot output..")
+	log.Println("writing dot output")
 
-	writeErr := ioutil.WriteFile(fmt.Sprintf("%s.gv", fname), output, 0755)
+	writeErr := os.WriteFile(fmt.Sprintf("%s.gv", fname), output, 0755)
 	if writeErr != nil {
 		log.Fatalf("%v\n", writeErr)
 	}
 
-	log.Printf("converting dot to %s..\n", outputFormat)
+	log.Printf("converting dot to %s\n", outputFormat)
 
 	_, err = dotToImage(fname, outputFormat, output)
 	if err != nil {
