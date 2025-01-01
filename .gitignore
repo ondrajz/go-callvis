@@ -29,3 +29,6 @@ _testmain.go
 # Builds
 /.build/
 go-callvis
+
+# IDE
+/.idea/

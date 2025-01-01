@@ -2,11 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
   schedule:
-    - cron: '0 */12 * * *'
+    - cron: '0 3 * * *'
 
 jobs:
   build-test:
@@ -15,14 +14,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: [ '1.20', '1.19' ]
+        go: [ 'stable', 'oldstable', '1.21' ]
 
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "Setup Go ${{ matrix.go }}"
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
 

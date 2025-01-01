@@ -5,19 +5,20 @@ import (
 	"fmt"
 	"go/build"
 	"go/types"
-	"golang.org/x/tools/go/callgraph"
-	"golang.org/x/tools/go/callgraph/cha"
-	"golang.org/x/tools/go/callgraph/rta"
-	"golang.org/x/tools/go/callgraph/static"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"golang.org/x/tools/go/callgraph"
+	"golang.org/x/tools/go/callgraph/cha"
+	"golang.org/x/tools/go/callgraph/rta"
+	"golang.org/x/tools/go/callgraph/static"
 
 	"golang.org/x/tools/go/packages"
-	"golang.org/x/tools/go/pointer"
 	"golang.org/x/tools/go/ssa"
 	"golang.org/x/tools/go/ssa/ssautil"
 )
@@ -25,13 +26,12 @@ import (
 type CallGraphType string
 
 const (
-	CallGraphTypeStatic  CallGraphType = "static"
-	CallGraphTypeCha                   = "cha"
-	CallGraphTypeRta                   = "rta"
-	CallGraphTypePointer               = "pointer"
+	CallGraphTypeStatic CallGraphType = "static"
+	CallGraphTypeCha    CallGraphType = "cha"
+	CallGraphTypeRta    CallGraphType = "rta"
 )
 
-//==[ type def/func: analysis   ]===============================================
+// ==[ type def/func: analysis   ]===============================================
 type renderOpts struct {
 	cacheDir string
 	focus    string
@@ -80,7 +80,7 @@ func initFuncs(pkgs []*ssa.Package) ([]*ssa.Function, error) {
 	return inits, nil
 }
 
-//==[ type def/func: analysis   ]===============================================
+// ==[ type def/func: analysis   ]===============================================
 type analysis struct {
 	opts      *renderOpts
 	prog      *ssa.Program
@@ -97,6 +97,9 @@ func (a *analysis) DoAnalysis(
 	tests bool,
 	args []string,
 ) error {
+	logf("begin analysis")
+	defer logf("analysis done")
+
 	cfg := &packages.Config{
 		Mode:       packages.LoadAllSyntax,
 		Tests:      tests,
@@ -104,22 +107,24 @@ func (a *analysis) DoAnalysis(
 		BuildFlags: getBuildFlags(),
 	}
 
+	logf("loading packages")
+
 	initial, err := packages.Load(cfg, args...)
 	if err != nil {
 		return err
 	}
-
 	if packages.PrintErrors(initial) > 0 {
 		return fmt.Errorf("packages contain errors")
 	}
 
+	logf("loaded %d initial packages, building program", len(initial))
+
 	// Create and build SSA-form program representation.
-	mode := ssa.BuilderMode(0)
-	if algo == CallGraphTypeRta {
-		mode = ssa.InstantiateGenerics
-	}
+	mode := ssa.InstantiateGenerics
 	prog, pkgs := ssautil.AllPackages(initial, mode)
 	prog.Build()
+
+	logf("build done, computing callgraph (algo: %v)", algo)
 
 	var graph *callgraph.Graph
 	var mainPkg *ssa.Package
@@ -139,7 +144,7 @@ func (a *analysis) DoAnalysis(
 		for _, main := range mains {
 			roots = append(roots, main.Func("main"))
 		}
-		
+
 		inits, err := initFuncs(prog.AllPackages())
 		if err != nil {
 			return err
@@ -149,26 +154,11 @@ func (a *analysis) DoAnalysis(
 		}
 
 		graph = rta.Analyze(roots, true).CallGraph
-	case CallGraphTypePointer:
-		mains, err := mainPackages(prog.AllPackages())
-		if err != nil {
-			return err
-		}
-		mainPkg = mains[0]
-		config := &pointer.Config{
-			Mains:          mains,
-			BuildCallGraph: true,
-		}
-		ptares, err := pointer.Analyze(config)
-		if err != nil {
-			return err
-		}
-		graph = ptares.CallGraph
 	default:
 		return fmt.Errorf("invalid call graph type: %s", a.opts.algo)
 	}
 
-	//cg.DeleteSyntheticNodes()
+	logf("callgraph resolved with %d nodes", len(graph.Nodes))
 
 	a.prog = prog
 	a.pkgs = pkgs
@@ -276,6 +266,9 @@ func (a *analysis) Render() ([]byte, error) {
 		focusPkg *types.Package
 	)
 
+	start := time.Now()
+	logf("begin rendering")
+
 	if a.opts.focus != "" {
 		if ssaPkg = a.prog.ImportedPackage(a.opts.focus); ssaPkg == nil {
 			if strings.Contains(a.opts.focus, "/") {
@@ -302,7 +295,7 @@ func (a *analysis) Render() ([]byte, error) {
 			}
 		}
 		focusPkg = ssaPkg.Pkg
-		logf("focusing: %v", focusPkg.Path())
+		logf("focusing package: %v (path: %v)", focusPkg.Name(), focusPkg.Path())
 	}
 
 	dot, err := printOutput(
@@ -320,6 +313,8 @@ func (a *analysis) Render() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("processing failed: %v", err)
 	}
+
+	logf("rendering done (took %v sec)", time.Since(start).Round(time.Millisecond).Seconds())
 
 	return dot, nil
 }
