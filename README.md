@@ -3,8 +3,8 @@
 <h1 align="center">go-callvis</h1>
 
 <p align="center">
-  <a href="https://github.com/ofabry/go-callvis/releases"><img src="https://img.shields.io/github/release/ofabry/go-callvis.svg?label=latest%20release&logo=github&sort=semver&color=blue" alt="Github release"></a>
-  <a href="https://github.com/ofabry/go-callvis/actions"><img src="https://github.com/ofabry/go-callvis/actions/workflows/ci.yml/badge.svg" alt="Build status"></a>
+  <a href="https://github.com/ondrajz/go-callvis/releases"><img src="https://img.shields.io/github/release/ondrajz/go-callvis.svg?label=latest%20release&logo=github&sort=semver&color=blue" alt="Github release"></a>
+  <a href="https://github.com/ondrajz/go-callvis/actions"><img src="https://github.com/ondrajz/go-callvis/actions/workflows/ci.yml/badge.svg" alt="Build status"></a>
   <a href="https://github.com/nikolaydubina/go-recipes"><img src="https://raw.githubusercontent.com/nikolaydubina/go-recipes/main/badge.svg?raw=true" alt="go-recipes"></a>
   <a href="https://gophers.slack.com/archives/go-callvis"><img src="https://img.shields.io/badge/gophers%20slack-%23go--callvis-ff69b4.svg" alt="Slack channel"></a>
 </p>
@@ -31,7 +31,7 @@ the code much higher or when you are just simply trying to understand code of so
 
 ### Output preview
 
-[![main](images/main.png)](https://raw.githubusercontent.com/ofabry/go-callvis/master/images/main.png)
+[![main](images/main.png)](images/main.png)
 
 > Check out the [source code](examples/main) for the above image.
 
@@ -172,7 +172,7 @@ Here you can find descriptions for various types of output.
 
 Here is an example for the project [syncthing](https://github.com/syncthing/syncthing).
 
-[![syncthing example](images/syncthing.png)](https://raw.githubusercontent.com/ofabry/go-callvis/master/images/syncthing.png)
+[![syncthing example](images/syncthing.png)](https://raw.githubusercontent.com/ondrajz/go-callvis/master/images/syncthing.png)
 
 > Check out [more examples](examples) and used command options.
 
@@ -183,15 +183,15 @@ Join [#go-callvis](https://gophers.slack.com/archives/go-callvis) channel at [go
 ### How to help
 
 Did you find any bugs or have some suggestions?
-- Feel free to open [new issue](https://github.com/ofabry/go-callvis/issues/new) or start discussion in the slack channel.
+- Feel free to open [new issue](https://github.com/ondrajz/go-callvis/issues/new) or start discussion in the slack channel.
 
 Do you want to contribute to the project?
-- Fork the repository and open a pull request. [Here](https://github.com/ofabry/go-callvis/projects/1) you can find TODO features.
+- Fork the repository and open a pull request. [Here](https://github.com/ondrajz/go-callvis/projects/1) you can find TODO features.
 
 ---
 
 #### Roadmap
 
-##### The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/ofabry/goexplorer)!
+##### The *interactive tool* described below has been published as a *separate project* called [goexplorer](https://github.com/ondrajz/goexplorer)!
 
 > Ideal goal of this project is to make web app that would locally store the call graph data and then provide quick access of the call graphs for any package of your dependency tree. At first it would show an interactive map of overall dependencies between packages and then by selecting particular package it would show the call graph and provide various options to alter the output dynamically.
