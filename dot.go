@@ -167,18 +167,18 @@ func runDotToImageCallSystemGraphviz(outfname string, format string, dot []byte)
 		dotSystemBinary = dot
 	}
 
-	var img string
+	var path string
 	if outfname == "" {
-		img = filepath.Join(os.TempDir(), fmt.Sprintf("go-callvis_export.%s", format))
+		path = filepath.Join(os.TempDir(), fmt.Sprintf("go-callvis_export.%s", format))
 	} else {
-		img = fmt.Sprintf("%s.%s", outfname, format)
+		path = fmt.Sprintf("%s.%s", outfname, format)
 	}
-	cmd := exec.Command(dotSystemBinary, fmt.Sprintf("-T%s", format), "-o", img)
+	cmd := exec.Command(dotSystemBinary, fmt.Sprintf("-T%s", format), "-o", path)
 	cmd.Stdin = bytes.NewReader(dot)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("command '%v': %v\n%v", cmd, err, stderr.String())
 	}
-	return img, nil
+	return path, nil
 }

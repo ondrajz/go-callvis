@@ -1,5 +1,4 @@
 //go:build cgo
-// +build cgo
 
 package main
 
@@ -26,14 +25,14 @@ func runDotToImage(outfname string, format string, dot []byte) (string, error) {
             log.Printf("error closing graphviz: %v", err)
         }
     }()
-    var img string
+    var path string
     if outfname == "" {
-        img = filepath.Join(os.TempDir(), fmt.Sprintf("go-callvis_export.%s", format))
+        path = filepath.Join(os.TempDir(), fmt.Sprintf("go-callvis_export.%s", format))
     } else {
-        img = fmt.Sprintf("%s.%s", outfname, format)
+        path = fmt.Sprintf("%s.%s", outfname, format)
     }
-    if err := g.RenderFilename(graph, graphviz.Format(format), img); err != nil {
+    if err := g.RenderFilename(graph, graphviz.Format(format), path); err != nil {
         return "", err
     }
-    return img, nil
+    return path, nil
 }
