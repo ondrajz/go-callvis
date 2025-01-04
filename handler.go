@@ -25,7 +25,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	var img string
 	if img = Analysis.FindCachedImg(); img != "" {
-		log.Println("serving file:", img)
+		log.Println("serving cached file:", img)
 		http.ServeFile(w, r, img)
 		return
 	}
@@ -38,17 +38,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	output, err := Analysis.Render()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("rendering failed: %v", err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	if r.Form.Get("format") == "dot" {
-		log.Println("writing dot output..")
+		log.Println("writing dot output")
 		fmt.Fprint(w, string(output))
 		return
 	}
 
-	log.Printf("converting dot to %s..\n", *outputFormat)
+	log.Printf("converting dot to %s\n", *outputFormat)
 
 	img, err = dotToImage("", *outputFormat, output)
 	if err != nil {

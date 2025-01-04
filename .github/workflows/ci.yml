@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  build-test:
+    name: "Build & Test"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: [ 'stable', 'oldstable', '1.21' ]
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Setup Go ${{ matrix.go }}"
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: "Download Deps"
+        run: go mod download -x
+
+      - name: "Check go.mod"
+        run: |
+          go mod tidy -v
+          git diff --name-only --exit-code go.mod || ( git diff && echo "Run go tidy to update go.mod" && false )
+
+      - name: "Build"
+        run: make build
+
+      - name: "Test"
+        run: make test
