@@ -87,6 +87,7 @@ type analysis struct {
 	pkgs      []*ssa.Package
 	mainPkg   *ssa.Package
 	callgraph *callgraph.Graph
+	initial []*packages.Package
 }
 
 var Analysis *analysis
@@ -101,7 +102,7 @@ func (a *analysis) DoAnalysis(
 	defer logf("analysis done")
 
 	cfg := &packages.Config{
-		Mode:       packages.LoadAllSyntax,
+		Mode: packages.LoadAllSyntax | packages.NeedModule,
 		Tests:      tests,
 		Dir:        dir,
 		BuildFlags: getBuildFlags(),
@@ -164,6 +165,7 @@ func (a *analysis) DoAnalysis(
 	a.pkgs = pkgs
 	a.mainPkg = mainPkg
 	a.callgraph = graph
+	a.initial = initial
 	return nil
 }
 
@@ -235,6 +237,8 @@ func (a *analysis) OverrideByHTTP(r *http.Request) {
 	}
 	if std := r.FormValue("std"); std != "" {
 		a.opts.nostd = false
+	} else if nostd := r.FormValue("nostd"); nostd != "" {
+		a.opts.nostd = true
 	}
 	if inter := r.FormValue("nointer"); inter != "" {
 		a.opts.nointer = true
@@ -299,6 +303,7 @@ func (a *analysis) Render() ([]byte, error) {
 	}
 
 	dot, err := printOutput(
+		a.initial,
 		a.prog,
 		a.mainPkg,
 		a.callgraph,

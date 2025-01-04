@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -13,9 +14,17 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
 	logf("----------------------")
-	logf(" => handling request:  %v", r.URL)
+	logf(" => handling request: %v %v", r.Method, r.URL)
 	logf("----------------------")
+
+	t0 := time.Now()
+	defer func() {
+		logf("----------------------")
+		logf(" -> request done (took %.3fs):  %v", time.Since(t0).Round(time.Millisecond).Seconds(), r.URL)
+		logf("----------------------")
+	}()
 
 	// set up cmdline default for analysis
 	Analysis.OptsSetup()
@@ -49,12 +58,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("converting dot to %s\n", *outputFormat)
-
+	t := time.Now()
+	
 	img, err = dotToImage("", *outputFormat, output)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("conversion done (took %.3fs)", time.Since(t).Round(time.Millisecond).Seconds())
 
 	err = Analysis.CacheImg(img)
 	if err != nil {
