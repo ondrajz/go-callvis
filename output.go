@@ -9,8 +9,21 @@ import (
 	"strings"
 
 	"golang.org/x/tools/go/callgraph"
+	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/ssa"
 )
+
+var stdPackages = map[string]struct{}{}
+
+func init() {
+	pkgs, err := packages.Load(nil, "std")
+	if err != nil {
+		panic(err)
+	}
+	for _, p := range pkgs {
+		stdPackages[p.PkgPath] = struct{}{}
+	}
+}
 
 func isSynthetic(edge *callgraph.Edge) bool {
 	// TODO: consider handling callee.Func.Pkg == nil
@@ -25,10 +38,8 @@ func inStd(node *callgraph.Node) bool {
 }
 
 func isStdPkgPath(path string) bool {
-	if strings.Contains(path, ".") {
-		return false
-	}
-	return true
+	_, ok := stdPackages[path]
+	return ok
 }
 
 func printOutput(
