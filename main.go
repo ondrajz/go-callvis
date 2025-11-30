@@ -2,6 +2,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"flag"
 	"fmt"
 	"go/build"
@@ -14,6 +15,8 @@ import (
 
 	"github.com/pkg/browser"
 	"golang.org/x/tools/go/buildutil"
+	"golang.org/x/tools/go/callgraph"
+	"golang.org/x/tools/go/ssa"
 )
 
 const Usage = `go-callvis: visualize call graph of a Go program.
@@ -42,6 +45,7 @@ var (
 	skipBrowser   = flag.Bool("skipbrowser", false, "Skip opening browser.")
 	outputFile    = flag.String("file", "", "output filename - omit to use server mode")
 	outputFormat  = flag.String("format", "svg", "output file format [svg | png | jpg | ...]")
+	importFlag    = flag.String("exportImport", "", "Writes the imports found in provided name or import path to specified file.")
 	cacheDir      = flag.String("cacheDir", "", "Enable caching to avoid unnecessary re-rendering, you can force rendering by adding 'refresh=true' to the URL query or emptying the cache directory")
 	callgraphAlgo = flag.String("algo", string(CallGraphTypeStatic), fmt.Sprintf("The algorithm used to construct the call graph. Possible values inlcude: %q, %q, %q, %q",
 		CallGraphTypeStatic, CallGraphTypeCha, CallGraphTypeRta, CallGraphTypeVta))
@@ -110,9 +114,58 @@ func outputDot(fname string, outputFormat string) {
 
 	log.Printf("converting dot to %s\n", outputFormat)
 
+	if outputFormat == "csv" {
+		dotToCsv(fmt.Sprintf("%v.csv", fname))
+		return
+	}
+
 	_, err = dotToImage(fname, outputFormat, output)
 	if err != nil {
 		log.Fatalf("%v\n", err)
+	}
+}
+
+func writeCsv(writer *csv.Writer, nodesMap map[*ssa.Function]*callgraph.Node) {
+	for fun, node := range nodesMap {
+		if node.Out == nil {
+			continue
+		}
+
+		line := []string{fun.String()}
+
+		for _, edge := range node.Out {
+			line = append(line, edge.Callee.Func.String())
+		}
+		err := writer.Write(line)
+		if err != nil {
+			log.Fatalf("error writing csv: %v\n", err)
+		}
+	}
+}
+
+//Creates a adjacency list in csv format for all nodes and edges
+func dotToCsv(fname string) (error) {
+	f, err := os.Create(fname)
+	if err != nil {
+		log.Fatalf("could not create file %v: %v\n", fname, err)
+	}
+
+	writer := csv.NewWriter(f)
+	writeCsv(writer, Analysis.callgraph.Nodes)
+	writer.Flush()
+	f.Close()
+	return nil
+}
+
+func outputImports(fname string) {
+	output := ""
+	for _, p := range Analysis.imports {
+		output += fmt.Sprintf("%v\n", p.String())
+	}
+	bytes := []byte(output)
+	err := os.WriteFile(fname, bytes, 0755)
+	if err != nil {
+		 log.Fatalf("%v\n", err)
 	}
 }
 
@@ -142,6 +195,10 @@ func main() {
 	Analysis = new(analysis)
 	if err := Analysis.DoAnalysis(CallGraphType(*callgraphAlgo), "", tests, args); err != nil {
 		log.Fatal(err)
+	}
+
+	if *importFlag != "" {
+		outputImports(*importFlag)
 	}
 
 	http.HandleFunc("/", handler)

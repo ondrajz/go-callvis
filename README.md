@@ -53,17 +53,17 @@ To install go-callvis, run:
 
 ```sh
 # Latest release
-go install github.com/ofabry/go-callvis@latest
+go install github.com/OscarBohlin/go-callvis@latest
 
 # Development version
-go install github.com/ofabry/go-callvis@master
+go install github.com/OscarBohlin/go-callvis@master
 ```
 
 Alternatively, clone the repository and compile the source code:
 
 ```sh
 # Clone repository
-git clone https://github.com/ofabry/go-callvis.git
+git clone https://github.com/OscarBohlin/go-callvis.git
 cd go-callvis
 
 # Compile and install
@@ -142,31 +142,31 @@ Here you can find descriptions for various types of output.
 
 ### Packages / Types
 
-|Represents  | Style|
-|----------: | :-------------|
-|`focused`   | **blue** color|
-|`stdlib`    | **green** color|
-|`other`     | **yellow** color|
+| Represents | Style            |
+| ---------: | :--------------- |
+|  `focused` | **blue** color   |
+|   `stdlib` | **green** color  |
+|    `other` | **yellow** color |
 
 ### Functions / Methods
 
-|Represents   | Style|
-|-----------: | :--------------|
-|`exported`   | **bold** border|
-|`unexported` | **normal** border|
-|`anonymous`  | **dotted** border|
+|   Represents | Style             |
+| -----------: | :---------------- |
+|   `exported` | **bold** border   |
+| `unexported` | **normal** border |
+|  `anonymous` | **dotted** border |
 
 ### Calls
 
-|Represents   | Style|
-|-----------: | :-------------|
-|`internal`   | **black** color|
-|`external`   | **brown** color|
-|`static`     | **solid** line|
-|`dynamic`    | **dashed** line|
-|`regular`    | **simple** arrow|
-|`concurrent` | arrow with **circle**|
-|`deferred`   | arrow with **diamond**|
+|   Represents | Style                  |
+| -----------: | :--------------------- |
+|   `internal` | **black** color        |
+|   `external` | **brown** color        |
+|     `static` | **solid** line         |
+|    `dynamic` | **dashed** line        |
+|    `regular` | **simple** arrow       |
+| `concurrent` | arrow with **circle**  |
+|   `deferred` | arrow with **diamond** |
 
 ## Examples
 

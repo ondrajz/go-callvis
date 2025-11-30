@@ -89,6 +89,7 @@ type analysis struct {
 	pkgs      []*ssa.Package
 	mainPkg   *ssa.Package
 	callgraph *callgraph.Graph
+	imports   []*packages.Package
 }
 
 var Analysis *analysis
@@ -117,6 +118,14 @@ func (a *analysis) DoAnalysis(
 	}
 	if packages.PrintErrors(initial) > 0 {
 		return fmt.Errorf("packages contain errors")
+	}
+
+	if *importFlag != "" {
+		for _, p := range initial {
+			for _, i := range p.Imports {
+				a.imports = append(a.imports, i)
+			}
+		}
 	}
 
 	logf("loaded %d initial packages, building program", len(initial))
