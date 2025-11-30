@@ -9,8 +9,21 @@ import (
 	"strings"
 
 	"golang.org/x/tools/go/callgraph"
+	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/ssa"
 )
+
+var stdPackages = map[string]struct{}{}
+
+func init() {
+	pkgs, err := packages.Load(nil, "std")
+	if err != nil {
+		panic(err)
+	}
+	for _, p := range pkgs {
+		stdPackages[p.PkgPath] = struct{}{}
+	}
+}
 
 func isSynthetic(edge *callgraph.Edge) bool {
 	// TODO: consider handling callee.Func.Pkg == nil
@@ -25,10 +38,8 @@ func inStd(node *callgraph.Node) bool {
 }
 
 func isStdPkgPath(path string) bool {
-	if strings.Contains(path, ".") {
-		return false
-	}
-	return true
+	_, ok := stdPackages[path]
+	return ok
 }
 
 func printOutput(
@@ -142,6 +153,20 @@ func printOutput(
 		return false
 	}
 
+	var inIgnoreTypes = func(node *callgraph.Node) bool {
+		params := node.Func.Params
+		if len(params) == 0 || params[0] == nil {
+			return false
+		}
+
+		for _, ignored := range ignorePaths {
+			if params[0].Type().String() == ignored {
+				return true
+			}
+		}
+		return false
+	}
+
 	var isInter = func(edge *callgraph.Edge) bool {
 		//caller := edge.Caller
 		callee := edge.Callee
@@ -208,7 +233,8 @@ func printOutput(
 
 			// ignore path prefixes
 			if len(ignorePaths) > 0 &&
-				(inIgnores(caller) || inIgnores(callee)) {
+				(inIgnores(caller) || inIgnores(callee)) ||
+				inIgnoreTypes(caller) || inIgnoreTypes(callee) {
 				logf("IS ignored: %s -> %s", caller, callee)
 				return nil
 			}
