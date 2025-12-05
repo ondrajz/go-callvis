@@ -42,18 +42,27 @@ func isStdPkgPath(path string) bool {
 	return ok
 }
 
-func printOutput(
-	prog *ssa.Program,
-	mainPkg *ssa.Package,
-	cg *callgraph.Graph,
-	focusPkg *types.Package,
-	limitPaths,
-	ignorePaths,
-	includePaths []string,
-	groupBy []string,
-	nostd,
-	nointer bool,
-) ([]byte, error) {
+func printOutput(initial []*packages.Package, prog *ssa.Program, mainPkg *ssa.Package, cg *callgraph.Graph, focusPkg *types.Package, limitPaths, ignorePaths, includePaths, groupBy []string, nostd, nointer bool, ) ([]byte, error) {
+	var initialPkg *packages.Package
+	for _, p := range initial {
+		if p.PkgPath == mainPkg.Pkg.Path() {
+			initialPkg = p
+			break
+		}
+	}
+	if initialPkg != nil {
+		logf("initial package: %+v, module: %+v", initialPkg, initialPkg.Module)
+	} else {
+		logf("initial package: NOT FOUND")
+	}
+
+	var modulePath string
+	if initialPkg != nil && initialPkg.Module != nil {
+		modulePath = initialPkg.Module.Path
+	} else {
+		split := strings.SplitN(mainPkg.Pkg.Path(), "/", 3)
+		modulePath = strings.Join(split[:2], "/")
+	}
 
 	logf("printing output for: %v", focusPkg)
 	logf("src dirs: %+v, default build context: %+v", build.Default.SrcDirs(), build.Default)
@@ -290,9 +299,11 @@ func printOutput(
 			if isFocused {
 				attrs["fillcolor"] = "lightblue"
 			} else if isStdPkg {
-				attrs["fillcolor"] = "#adedad"
+				attrs["fillcolor"] = "#bfffbf"
+			} else if strings.HasPrefix(pkgPath, modulePath) {
+				attrs["fillcolor"] = "#FFF9CA"
 			} else {
-				attrs["fillcolor"] = "moccasin"
+				attrs["fillcolor"] = "#fccfcf"
 			}
 
 			// include pkg name
@@ -329,7 +340,7 @@ func printOutput(
 							"fontsize":  "16",
 							"label":     label,
 							"style":     "filled",
-							"fillcolor": "lightyellow",
+							"fillcolor": "mistyrose",
 							"URL":       fmt.Sprintf("/?f=%s", key),
 							"fontname":  "Tahoma bold",
 							"tooltip":   fmt.Sprintf("package: %s", key),
@@ -338,6 +349,8 @@ func printOutput(
 					}
 					if isStdPkg {
 						c.Clusters[key].Attrs["fillcolor"] = "#E0FFE1"
+					} else if strings.HasPrefix(node.Func.Pkg.Pkg.Path(), modulePath) {
+						c.Clusters[key].Attrs["fillcolor"] = "lightyellow"
 					}
 				}
 				c = c.Clusters[key]
@@ -358,7 +371,7 @@ func printOutput(
 							"label":     label,
 							"labelloc":  "b",
 							"style":     "rounded,filled",
-							"fillcolor": "wheat2",
+							"fillcolor": "#DCAFAF",
 							"tooltip":   fmt.Sprintf("type: %s", key),
 						},
 					}
@@ -366,6 +379,8 @@ func printOutput(
 						c.Clusters[key].Attrs["fillcolor"] = "lightsteelblue"
 					} else if isStdPkg {
 						c.Clusters[key].Attrs["fillcolor"] = "#c2e3c2"
+					} else if strings.HasPrefix(node.Func.Pkg.Pkg.Path(), modulePath) {
+						c.Clusters[key].Attrs["fillcolor"] = "wheat2"
 					}
 				}
 				c = c.Clusters[key]
