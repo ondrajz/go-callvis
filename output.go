@@ -42,6 +42,59 @@ func isStdPkgPath(path string) bool {
 	return ok
 }
 
+// signatureLabel renders the params and results of a function signature
+// for use in a node label, according to the given showargs mode:
+// "types" shows only types, "identifiers" shows only parameter names
+// (falling back to types when unnamed) and "full" shows both.
+func signatureLabel(sign *types.Signature, mode string, qual types.Qualifier) string {
+	format := func(v *types.Var, typ string) string {
+		switch mode {
+		case "identifiers":
+			if v.Name() != "" {
+				return v.Name()
+			}
+			return typ
+		case "full":
+			if v.Name() != "" {
+				return v.Name() + " " + typ
+			}
+			return typ
+		default: // "types"
+			return typ
+		}
+	}
+	sep := ", "
+	if mode == "types" {
+		sep = ","
+	}
+
+	tupleStrings := func(t *types.Tuple, variadic bool) []string {
+		parts := make([]string, t.Len())
+		for i := 0; i < t.Len(); i++ {
+			v := t.At(i)
+			typ := types.TypeString(v.Type(), qual)
+			if variadic && i == t.Len()-1 {
+				if slice, ok := v.Type().(*types.Slice); ok {
+					typ = "..." + types.TypeString(slice.Elem(), qual)
+				}
+			}
+			parts[i] = format(v, typ)
+		}
+		return parts
+	}
+
+	label := "(" + strings.Join(tupleStrings(sign.Params(), sign.Variadic()), sep) + ")"
+
+	results := sign.Results()
+	switch {
+	case results.Len() == 1 && results.At(0).Name() == "":
+		label += " " + tupleStrings(results, false)[0]
+	case results.Len() > 0:
+		label += " (" + strings.Join(tupleStrings(results, false), sep) + ")"
+	}
+	return label
+}
+
 func printOutput(
 	prog *ssa.Program,
 	mainPkg *ssa.Package,
@@ -53,6 +106,7 @@ func printOutput(
 	groupBy []string,
 	nostd,
 	nointer bool,
+	showArgs string,
 ) ([]byte, error) {
 
 	logf("printing output for: %v", focusPkg)
@@ -281,6 +335,17 @@ func printOutput(
 			if groupType && sign.Recv() != nil {
 				parts := strings.Split(label, ".")
 				label = parts[len(parts)-1]
+			}
+
+			// add function signature to label
+			if showArgs != "" && showArgs != "none" {
+				qual := func(p *types.Package) string {
+					if p == node.Func.Pkg.Pkg {
+						return ""
+					}
+					return p.Name()
+				}
+				label += signatureLabel(node.Func.Signature, showArgs, qual)
 			}
 
 			pkgPath := node.Func.Pkg.Pkg.Path()

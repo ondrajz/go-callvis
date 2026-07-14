@@ -122,6 +122,8 @@ Usage of go-callvis:
     	Omit calls to/from packages in standard library.
   -rankdir
         Direction of graph layout [LR | RL | TB | BT] (default "LR")
+  -showargs string
+    	Show function signatures in node labels [none | types | identifiers | full] (default "none")
   -skipbrowser
     	Skip opening browser.
   -tags build tags

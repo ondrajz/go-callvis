@@ -16,8 +16,8 @@ import (
 	"golang.org/x/tools/go/callgraph"
 	"golang.org/x/tools/go/callgraph/cha"
 	"golang.org/x/tools/go/callgraph/rta"
-	"golang.org/x/tools/go/callgraph/vta"
 	"golang.org/x/tools/go/callgraph/static"
+	"golang.org/x/tools/go/callgraph/vta"
 
 	"golang.org/x/tools/go/packages"
 	"golang.org/x/tools/go/ssa"
@@ -44,6 +44,7 @@ type renderOpts struct {
 	nointer  bool
 	refresh  bool
 	nostd    bool
+	showargs string
 	algo     CallGraphType
 }
 
@@ -188,6 +189,7 @@ func (a *analysis) OptsSetup() {
 		limit:    []string{*limitFlag},
 		nointer:  *nointerFlag,
 		nostd:    *nostdFlag,
+		showargs: *showArgsFlag,
 	}
 }
 
@@ -196,6 +198,13 @@ func (a *analysis) ProcessListArgs() (e error) {
 	var ignorePaths []string
 	var includePaths []string
 	var limitPaths []string
+
+	switch a.opts.showargs {
+	case "", "none", "types", "identifiers", "full":
+	default:
+		e = errors.New("invalid showargs option")
+		return
+	}
 
 	for _, g := range strings.Split(a.opts.group[0], ",") {
 		g := strings.TrimSpace(g)
@@ -265,6 +274,9 @@ func (a *analysis) OverrideByHTTP(r *http.Request) {
 	if inc := r.FormValue("include"); inc != "" {
 		a.opts.include[0] = inc
 	}
+	if st := r.FormValue("showargs"); st != "" {
+		a.opts.showargs = st
+	}
 	return
 }
 
@@ -320,6 +332,7 @@ func (a *analysis) Render() ([]byte, error) {
 		a.opts.group,
 		a.opts.nostd,
 		a.opts.nointer,
+		a.opts.showargs,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("processing failed: %v", err)
