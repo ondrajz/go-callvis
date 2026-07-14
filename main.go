@@ -35,6 +35,7 @@ var (
 	ignoreFlag    = flag.String("ignore", "", "Ignore package paths containing given prefixes (separated by comma)")
 	includeFlag   = flag.String("include", "", "Include package paths with given prefixes (separated by comma)")
 	nostdFlag     = flag.Bool("nostd", false, "Omit calls to/from packages in standard library.")
+	showArgsFlag  = flag.String("showargs", "none", "Show function signatures in node labels [none | types | identifiers | full]")
 	nointerFlag   = flag.Bool("nointer", false, "Omit calls to unexported functions.")
 	testFlag      = flag.Bool("tests", false, "Include test code.")
 	graphvizFlag  = flag.Bool("graphviz", false, "Use Graphviz's dot program to render images.")
@@ -116,7 +117,7 @@ func outputDot(fname string, outputFormat string) {
 	}
 }
 
-//noinspection GoUnhandledErrorResult
+// noinspection GoUnhandledErrorResult
 func main() {
 	flag.Parse()
 
